@@ -12,8 +12,7 @@
     "@nuxt/devtools": "latest",
     "@nuxt/image": "1.0.0-rc.1",
     "@nuxt/ui": "^2.8.0",
-    "nuxt": "^3.7.1",
-    "vite-plugin-glsl": "^1.1.2"
+    "nuxt": "^3.7.1"
   },
   "dependencies": {
     "@iconify-json/mdi": "^1.1.54",
