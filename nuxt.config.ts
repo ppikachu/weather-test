@@ -8,17 +8,6 @@ export default defineNuxtConfig({
 			RapidAPIHost: process.env.RapidAPIHost,
 		},
 	},
-	image: {
-		format: ["webp", "png"],
-		provider: "ipx",
-		ipx: {
-			// @ts-ignore
-			modifiers: {
-				quality: "80",
-				format: ["webp", "png"],
-			},
-		},
-	},
 	ui: {
 		icons: ["mdi"],
 	},
