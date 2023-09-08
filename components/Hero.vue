@@ -18,8 +18,8 @@ useHead({
 /* Define props */
 const props = defineProps({
 	texture: { type: String, default: '/images/ordinaryheart_i05.jpg' },
-	colorA: { type: Array, default: [ 1, 0, 0 ] },
-	colorB: { type: Array, default: [ 0, 0, 1 ] },
+	colorA: { type: Array, default: [1, 0, 0] },
+	colorB: { type: Array, default: [0, 0, 1] },
 	test: { type: Number, default: 1 },
 })
 
@@ -59,48 +59,53 @@ watch([y,width,height], () => {
 */
 
 onMounted(() => {
-// resolve-lygia package:
-data.value.current.precip_mm > 0 ? Shader.value = resolveLygia(rainFragment) : Shader.value = resolveLygia(norainFragment)
-// fakeData.current.precip_mm > 0 ? Shader.value = resolveLygia(rainFragment) : Shader.value = resolveLygia(norainFragment)
-// setup
-sandbox.value = new GlslCanvas(heroCanvas.value)
-heroCanvas.value.style.width = "100%"
-heroCanvas.value.style.height = "100%"
-// Load resolved shader:
-sandbox.value.load(Shader.value)
-// set canvas resolution
-sandbox.value.setUniform("u_resolution", [heroCanvas.value.clientHeight, heroCanvas.value.clientWidth])
-// Load a new texture and assign it to "uniform sampler2D u_texture":
-sandbox.value.setUniform("u_tex0", photo)
-sandbox.value.setUniform("textureAspect", 1.0)
-sandbox.value.setUniform("u_test", props.test)
-sandbox.value.setUniform("u_colorA", props.colorA[0], props.colorA[1], props.colorA[2])
-sandbox.value.setUniform("u_colorB", props.colorB[0], props.colorB[1], props.colorB[2])
-heroLoading.value = false;
+	// resolve-lygia package:
+	data.value.current.precip_mm > 0 ? Shader.value = resolveLygia(rainFragment) : Shader.value = resolveLygia(norainFragment)
+	// fakeData.current.precip_mm > 0 ? Shader.value = resolveLygia(rainFragment) : Shader.value = resolveLygia(norainFragment)
+	// setup
+	sandbox.value = new GlslCanvas(heroCanvas.value)
+	heroCanvas.value.style.width = "100%"
+	heroCanvas.value.style.height = "100%"
+	// Load resolved shader:
+	sandbox.value.load(Shader.value)
+	// set canvas resolution
+	sandbox.value.setUniform("u_resolution", [heroCanvas.value.clientHeight, heroCanvas.value.clientWidth])
+	// Load a new texture and assign it to "uniform sampler2D u_texture":
+	sandbox.value.setUniform("u_tex0", photo)
+	sandbox.value.setUniform("textureAspect", 1.0)
+	sandbox.value.setUniform("u_test", props.test)
+	sandbox.value.setUniform("u_colorA", props.colorA[0], props.colorA[1], props.colorA[2])
+	sandbox.value.setUniform("u_colorB", props.colorB[0], props.colorB[1], props.colorB[2])
+	heroLoading.value = false;
 })
 </script>
 
 <template>
 	<div id="divPortada" data-anchor="portada" class="relative">
 		<canvas ref="heroCanvas" class="sticky top-0 max-h-screen w-full" />
-		<div v-show="heroLoading" class="absolute top-0 w-full h-screen flex items-center justify-center bg-black text-gray-500 z-40">
+		<div v-show="heroLoading"
+			class="absolute top-0 w-full h-screen flex items-center justify-center bg-black text-gray-500 z-40">
 			<Icon name="mdi:creation" class="text-4xl animate-pulse" />
 		</div>
 	</div>
-	<div class="absolute inset-8">
-		<UCard class="max-w-max aspect-square">
-			{{ data.current.condition.text }}
-			<img :src="data.current.condition.icon" class="w-16 mx-auto mb-4" />
+	<div class="absolute flex items-end justify-center inset-8">
+		<UCard class="max-w-max aspect-square bg-opacity-20">
+			<template #header>
+				<h1 class="text-center text-xl text-indigo-300">{{ data.current.condition.text }}</h1>
+			</template>
+			<img :src="data.current.condition.icon" class="w-16 mx-auto mb-6" />
 			<div class="flex justify-between space-x-2">
-				<UBadge color="indigo" variant="outline"><UIcon name="i-heroicons-light-bulb" />{{ data.current.temp_c }}</UBadge>
-				<UBadge color="indigo" variant="outline"><UIcon name="i-heroicons-light-bulb" />{{ data.current.feelslike_c }}</UBadge>
-				<UBadge color="indigo" variant="outline"><UIcon name="i-heroicons-light-bulb" />{{ data.current.precip_mm }}</UBadge>
-				<UBadge color="indigo" variant="outline"><UIcon name="i-heroicons-light-bulb" />{{ data.current.precip_in }}</UBadge>
+				<UBadge color="indigo" size="lg" variant="soft">
+					<UIcon name="i-mdi-thermometer" />{{ data.current.temp_c }} °C
+				</UBadge>
+				<UBadge color="indigo" size="lg" variant="soft">
+					<UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data.current.precip_mm }} mm
+				</UBadge>
 			</div>
 		</UCard>
 	</div>
 </template>
 
-<style scoped>
-#divPortada { height: 100vh; }
-</style>
+<style scoped>#divPortada {
+	height: 100vh;
+}</style>

@@ -16,6 +16,7 @@
     "vite-plugin-glsl": "^1.1.2"
   },
   "dependencies": {
+    "@iconify-json/mdi": "^1.1.54",
     "glslCanvas": "^0.2.6",
     "resolve-lygia": "^1.0.4"
   }

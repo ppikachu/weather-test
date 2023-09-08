@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@iconify-json/mdi':
+    specifier: ^1.1.54
+    version: 1.1.54
   glslCanvas:
     specifier: ^0.2.6
     version: 0.2.6
@@ -856,9 +859,14 @@ packages:
       '@iconify/types': 2.0.0
     dev: true
 
+  /@iconify-json/mdi@1.1.54:
+    resolution: {integrity: sha512-3QAsxte90EalbN2e8J30OqSSZz9qN2x+kmykQwsPahoW2dOtSvj+BR9YdiUd9A5XKk2nuU4UH5Gj/cq6WZ6CzQ==}
+    dependencies:
+      '@iconify/types': 2.0.0
+    dev: false
+
   /@iconify/types@2.0.0:
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
-    dev: true
 
   /@iconify/utils@2.1.9:
     resolution: {integrity: sha512-mo+A4n3MwLlWlg1SoSO+Dt6pOPWKElk9sSJ6ZpuzbB9OcjxN8RUWxU3ulPwB1nglErWKRam2x4BAohbYF7FiFA==}
@@ -5404,6 +5412,7 @@ packages:
 
   /napi-wasm@1.1.0:
     resolution: {integrity: sha512-lHwIAJbmLSjF9VDRm9GoVOy9AGp3aIvkjv+Kvz9h16QR3uSVYH78PNQUnT2U4X53mhlnV2M7wrhibQ3GHicDmg==}
+    requiresBuild: true
     dev: true
 
   /negotiator@0.6.3:
