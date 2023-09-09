@@ -8,13 +8,13 @@ uniform float u_time;
 uniform float u_scroll;
 uniform sampler2D u_tex0;
 uniform vec2 u_resolution;
+uniform float textureAspect;
 uniform vec3  u_colorA;
 uniform vec3  u_colorB;
 
 #define U_SPEED 1.3
 #define MAX_X .3
 #define PLUS_X 0.5
-#define textureAspect 1.
 #define PI 3.1416
 #define u_damping .9
 
@@ -73,8 +73,8 @@ void main(){
 	// color = blendMultiply(color, vec3(d4),.05);
 
 	// debug:
-	// vec2 debug_pos = vec2(-0.65,-0.05);
-	// color += digits(st + debug_pos, scroll);
+	vec2 debug_pos = vec2(-0.65,-0.05);
+	color += digits(st + debug_pos, textureAspect);
 	// color += digits(st - vec2(0.05,0.05), updateInertia(2000.));
 	
 	//output:

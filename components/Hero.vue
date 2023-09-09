@@ -42,7 +42,7 @@ const heroLoading = ref(true)
 
 // TODO: size?, format?, something or fix this!
 const $img = useImage()
-const photo = $img(props.texture, { format: 'webp', fit: 'cover', width: 1000, height: 1000 })
+const photo = $img(props.texture, { format: 'webp' })
 
 /*
 // Listeners
@@ -72,7 +72,7 @@ onMounted(() => {
 	sandbox.value.setUniform("u_resolution", [heroCanvas.value.clientHeight, heroCanvas.value.clientWidth])
 	// Load a new texture and assign it to "uniform sampler2D u_texture":
 	sandbox.value.setUniform("u_tex0", photo)
-	sandbox.value.setUniform("textureAspect", 1.0)
+	sandbox.value.setUniform("textureAspect", 1.42)
 	sandbox.value.setUniform("u_test", props.test)
 	sandbox.value.setUniform("u_colorA", props.colorA[0], props.colorA[1], props.colorA[2])
 	sandbox.value.setUniform("u_colorB", props.colorB[0], props.colorB[1], props.colorB[2])
@@ -106,6 +106,8 @@ onMounted(() => {
 	</div>
 </template>
 
-<style scoped>#divPortada {
+<style scoped>
+#divPortada {
 	height: 100vh;
-}</style>
+}
+</style>
