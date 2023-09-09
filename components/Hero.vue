@@ -3,8 +3,9 @@
 import { resolveLygia } from 'resolve-lygia'
 import rainFragment from '~/assets/shaders/rain.frag?raw'
 import norainFragment from '~/assets/shaders/sdf1.frag?raw'
+
 // test weather
-import fakeData from '~/assets/sample-data.json'
+// import fakeData from '~/assets/sample-data.json'
 
 //TODO: use package or minified js
 useHead({
@@ -17,7 +18,7 @@ useHead({
 
 /* Define props */
 const props = defineProps({
-	texture: { type: String, default: '/images/ordinaryheart_i05.jpg' },
+	texture: { type: String, default: '/images/Tesla18Dalek10003Ft.jpg' },
 	colorA: { type: Array, default: [1, 0, 0] },
 	colorB: { type: Array, default: [0, 0, 1] },
 	test: { type: Number, default: 1 },
@@ -25,7 +26,7 @@ const props = defineProps({
 
 const config = useRuntimeConfig()
 
-const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q=-34.58%2C-58.39'
+const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q=-34.58,-58.39'
 const options = {
 	method: 'GET',
 	headers: {
@@ -44,21 +45,23 @@ const heroLoading = ref(true)
 const $img = useImage()
 const photo = $img(props.texture, { format: 'webp' })
 
-/*
 // Listeners
-	const { width, height } = useWindowSize()
+const { width: canvaswidth, height: canvasheight } = useWindowSize()
+const { y } = useWindowScroll()
 
-watch([y,width,height], () => {
+watch([y,canvaswidth, canvasheight], () => {
 	// set chroma by scroll
-	const pctCanvasScroll = (y.value/heroCanvas.value.clientHeight)*2
-	sandbox.value.setUniform("u_scroll", pctCanvasScroll > 1 ?  1 : pctCanvasScroll)
+	// const pctCanvasScroll = (y.value/heroCanvas.value.clientHeight)*2
+	// sandbox.value.setUniform("u_scroll", pctCanvasScroll > 1 ?  1 : pctCanvasScroll)
+	
 	// set canvas resolution
-	sandbox.value.setUniform("u_resolution", [heroCanvas.value.clientHeight, heroCanvas.value.clientWidth])
+	sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight])
 	}
 )
-*/
 
-onMounted(() => {
+function doSomethingOnLoad() {
+	const iwidth = document.getElementById("imgPlaceholder").clientWidth
+	const iheight = document.getElementById("imgPlaceholder").clientHeight
 	// resolve-lygia package:
 	data.value.current.precip_mm > 0 ? Shader.value = resolveLygia(rainFragment) : Shader.value = resolveLygia(norainFragment)
 	// fakeData.current.precip_mm > 0 ? Shader.value = resolveLygia(rainFragment) : Shader.value = resolveLygia(norainFragment)
@@ -72,20 +75,21 @@ onMounted(() => {
 	sandbox.value.setUniform("u_resolution", [heroCanvas.value.clientHeight, heroCanvas.value.clientWidth])
 	// Load a new texture and assign it to "uniform sampler2D u_texture":
 	sandbox.value.setUniform("u_tex0", photo)
-	sandbox.value.setUniform("textureAspect", 1.42)
+	sandbox.value.setUniform("textureAspect", iwidth/iheight)
 	sandbox.value.setUniform("u_test", props.test)
 	sandbox.value.setUniform("u_colorA", props.colorA[0], props.colorA[1], props.colorA[2])
 	sandbox.value.setUniform("u_colorB", props.colorB[0], props.colorB[1], props.colorB[2])
 	heroLoading.value = false;
-})
+}
 </script>
 
 <template>
-	<div id="divPortada" data-anchor="portada" class="relative">
+	<div id="divPortada" data-anchor="portada" class="relative h-screen">
+		<NuxtImg :src="props.texture" id="imgPlaceholder" @load="doSomethingOnLoad" class="absolute" />
 		<canvas ref="heroCanvas" class="sticky top-0 max-h-screen w-full" />
 		<div v-show="heroLoading"
 			class="absolute top-0 w-full h-screen flex items-center justify-center bg-black text-gray-500 z-40">
-			<Icon name="mdi:creation" class="text-4xl animate-pulse" />
+			<UIcon name="mdi-creation" class="text-4xl animate-pulse" />
 		</div>
 	</div>
 	<div class="absolute flex items-end justify-center inset-8">
@@ -105,9 +109,3 @@ onMounted(() => {
 		</UCard>
 	</div>
 </template>
-
-<style scoped>
-#divPortada {
-	height: 100vh;
-}
-</style>

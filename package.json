@@ -12,11 +12,12 @@
     "@nuxt/devtools": "latest",
     "@nuxt/image": "1.0.0-rc.1",
     "@nuxt/ui": "^2.8.0",
-    "nuxt": "^3.7.1"
+    "nuxt": "^3.7.1",
+    "resolve-lygia": "^1.0.4"
   },
   "dependencies": {
     "@iconify-json/mdi": "^1.1.54",
-    "glslCanvas": "^0.2.6",
-    "resolve-lygia": "^1.0.4"
+    "@vueuse/nuxt": "^10.4.1",
+    "glslCanvas": "^0.2.6"
   }
 }
