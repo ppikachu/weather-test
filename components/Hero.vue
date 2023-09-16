@@ -115,7 +115,7 @@ function thunderLevel() {
 <template>
 	<div id="divPortada" data-anchor="portada" class="relative h-screen">
 		<div ref="tweakpane" class="absolute"></div>
-		<UButton icon="i-mdi-cog" variant="link" @click="isOpen = true" class="absolute m-4 z-10" />
+		<UButton icon="i-mdi-cog" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
 		<UModal v-model="isOpen">
 			<div class="p-4">
 				<span class="block">Temp:</span>
@@ -129,7 +129,7 @@ function thunderLevel() {
 		<canvas ref="heroCanvas" class="sticky top-0 max-h-screen w-full" />
 		<div v-show="heroLoading"
 			class="absolute top-0 w-full h-screen flex items-center justify-center bg-black text-gray-500 z-40">
-			<UIcon name="i-mdi-creation" class="text-4xl animate-pulse" />
+			<UIcon name="i-mdi-cloud-clock-outline" class="text-8xl animate-pulse" />
 		</div>
 	</div>
 	<div class="absolute flex items-end justify-center inset-8 text-xs">
