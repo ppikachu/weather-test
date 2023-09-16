@@ -1,5 +1,6 @@
+#extension GL_OES_standard_derivatives : enable
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #endif
 
 uniform vec2 u_resolution;
@@ -39,6 +40,7 @@ uniform float temp_c;
 
 // shadertoy emulation
 #define S(a, b, t) smoothstep(a, b, t)
+#define CHEAP_NORMALS
 
 vec3 N13(float p) {
 	//  from DAVE HOSKINS
@@ -133,8 +135,8 @@ void main() {
 	float t = T * .2;
 	
 	float rainAmount = precip_mm * .1;								// adjust the amount of rain
-	float fog = map(temp_c, 10., 25., 1., 0.);				// adjust the fog. less temperatures increase the fog
-	float maxBlur = mix(.01, 1., fog + rainAmount);		// adjust the blur.
+	float fog = map(temp_c, 10., 25., 1., 0.2);				// adjust the fog. less temperatures increase the fog
+	float maxBlur = mix(.01, 1., fog);								// adjust the blur.
 	float minBlur = .1;
 	float story = 0.;
 
@@ -142,12 +144,15 @@ void main() {
 	float layer1 = S(.25, .75, rainAmount);
 	float layer2 = S(.0, .5, rainAmount);
 	vec2 c = Drops(uv, t, staticDrops, layer1, layer2);
-
-	// expensive normals
-	vec2 e = vec2(.001, 0.);
-	float cx = Drops(uv+e, t, staticDrops, layer1, layer2).x;
-	float cy = Drops(uv+e.yx, t, staticDrops, layer1, layer2).x;
-	vec2 normal = vec2(cx-c.x, cy-c.x); // expensive normals
+	
+	#ifdef CHEAP_NORMALS
+		vec2 normal = vec2(dFdx(c.x), dFdy(c.x));// cheap normals (3x cheaper, but 2 times shittier ;))
+	#else
+		vec2 e = vec2(.001, 0.);
+		float cx = Drops(uv+e, t, staticDrops, layer1, layer2).x;
+		float cy = Drops(uv+e.yx, t, staticDrops, layer1, layer2).x;
+		vec2 normal = vec2(cx-c.x, cy-c.x);		// expensive normals
+	#endif
 	
 	//FIT TEXTURE
 	float scaleX = 1.0, scaleY = 1.0;
@@ -165,16 +170,16 @@ void main() {
 	if (precip_mm > 0.0) {
 		float focus = mix(maxBlur-c.y * .6, minBlur, S(.2, .5, c.x));
 		vec3 blurmask = vec3(focus).rgb; // new focus
-		float kernel_size = max(1.0, blurmask.x * 8.0);
+		float kernel_size = max(1.0, blurmask.x * 4.0);
 
 		// col = vec3(normal.x,normal.y,0.); // debug normals
 		// col = vec3(c.x, c.y, .0); // debug c
 		// col = vec3(maxBlur - c.y, .0, .0); // debug c
-		// col = blurmask; // debug focus
+		col = blurmask; // debug focus
 		
 		// col = texture2D(u_tex0, vTexCoordinate+normal).rgb;
-		// col = boxBlur(u_tex0, vTexCoordinate+normal, vec2(blurmask.x * .002), int(kernel_size)).rgb;
-		col = gaussianBlur(u_tex0, vTexCoordinate+normal, vec2(blurmask.x * .002), int(kernel_size)).rgb;
+		col = boxBlur(u_tex0, vTexCoordinate+normal, vec2(blurmask.x * .002), int(kernel_size)).rgb;
+		// col = gaussianBlur(u_tex0, vTexCoordinate+normal, vec2(blurmask.x * .002), int(kernel_size)).rgb;
 
 		t = (T+3.)*.5;																					// make time sync with first lightning
 		lightning = sin(t*sin(t*10.));													// lighting flicker
@@ -184,7 +189,7 @@ void main() {
 
 	// not raining!
 	else {
-		col = texture2D(u_tex1, vTexCoordinate).rgb;
+		col = texture2D(u_tex0, vTexCoordinate).rgb;
 	}
 	// col *= 1.-dot(v_texcoord -= .5, v_texcoord);			// vignette
 	col *= fade;																			// composite start and end fade

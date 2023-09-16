@@ -6,6 +6,7 @@
 //
 
 #define S(a, b, t) smoothstep(a, b, t)
+#define CHEAP_NORMALS
 
 vec3 N13(float p) {
  //  from DAVE HOSKINS
@@ -119,13 +120,15 @@ void mainDrops( out vec4 fragColor, in vec2 fragCoord )
   float staticDrops = S(-.5, 1., rainAmount)*2.;
   float layer1 = S(.25, .75, rainAmount);
   float layer2 = S(.0, .5, rainAmount);
-    
-    
-  vec2 c = Drops(uv, t, staticDrops, layer1, layer2);
-  vec2 e = vec2(.001, 0.);
-  float cx = Drops(uv+e, t, staticDrops, layer1, layer2).x;
-  float cy = Drops(uv+e.yx, t, staticDrops, layer1, layer2).x;
-  vec2 n = vec2(cx-c.x, cy-c.x); // expensive normals
+  
+  #ifdef CHEAP_NORMALS
+    vec2 n = vec2(dFdx(c.x), dFdy(c.x));// cheap normals (3x cheaper, but 2 times shittier ;))
+  #else
+    vec2 e = vec2(.001, 0.);
+    float cx = Drops(uv+e, t, staticDrops, layer1, layer2).x;
+    float cy = Drops(uv+e.yx, t, staticDrops, layer1, layer2).x;
+    vec2 n = vec2(cx-c.x, cy-c.x);		// expensive normals
+  #endif
     
   float focus = mix(maxBlur-c.y, minBlur, S(.1, .2, c.x));
   vec3 col = textureLod(iChannel0, UV+n, focus).rgb;
