@@ -9,8 +9,8 @@ uniform float u_scroll;
 uniform sampler2D u_tex0;
 uniform vec2 u_resolution;
 uniform float textureAspect;
-uniform vec3  u_colorA;
-uniform vec3  u_colorB;
+vec3 u_colorA = vec3(1.0, 0.0, 0.0);
+vec3 u_colorB = vec3(0.0, 0.0, 1.0);
 
 #define U_SPEED 1.3
 #define MAX_X .3

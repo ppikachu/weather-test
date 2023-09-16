@@ -4,5 +4,11 @@
 	},
 	"editor.quickSuggestions": {
 			"strings": true
-	}
+	},
+	"glsl-canvas.textures": {
+		"0": "../../public/images/ordinaryheart_i05.jpg",
+		"1": "https://rawgit.com/actarian/plausible-brdf-shader/master/textures/noise/cloud-1.png",
+		"2": "https://rawgit.com/actarian/plausible-brdf-shader/master/textures/noise/cloud-2.jpg",        
+  },
+
 }

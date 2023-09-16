@@ -1,41 +1,68 @@
-<script setup>
-// import GlslCanvas from 'glslCanvas'
+<script setup lang="ts">
+// @ts-ignore
 import { resolveLygia } from 'resolve-lygia'
 import rainFragment from '~/assets/shaders/rain.frag?raw'
-import norainFragment from '~/assets/shaders/sdf1.frag?raw'
-
-// test weather
-// import fakeData from '~/assets/sample-data.json'
+// import GlslCanvas from 'glslCanvas'
+import { Pane } from 'tweakpane'
 
 //TODO: use package or minified js
 useHead({
 	script: [{
 		type: 'text/javascript',
 		src: 'https://rawgit.com/patriciogonzalezvivo/glslCanvas/master/dist/GlslCanvas.js',
-		body: true
-	}],
+	}]
 })
 
 /* Define props */
-const props = defineProps({
-	texture: { type: String, default: '/images/Tesla18Dalek10003Ft.jpg' },
-	colorA: { type: Array, default: [1, 0, 0] },
-	colorB: { type: Array, default: [0, 0, 1] },
-	test: { type: Number, default: 1 },
+interface Props {
+	texture: string
+	test: boolean
+}
+
+const props: Props = defineProps({
+	texture: { type: String, default: '/images/TimeToForest_3.png' },
+	test: { type: Boolean, default: false },
 })
 
-const config = useRuntimeConfig()
+// test weather
+import fakeData from '~/assets/sample-data-rain.json'
 
+// api weather
+const config = useRuntimeConfig()
 const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q=-34.58,-58.39'
-const options = {
+const options: object = {
 	method: 'GET',
 	headers: {
 		'X-RapidAPI-Key': config.public.RapidAPIKey,
 		'X-RapidAPI-Host': config.public.RapidAPIHost
 	}
 }
-const { data } = await useFetch(url, options)
+const { data: apiData } = await useFetch(url, options)
+const finalApiData = apiData.value
+// test weather check
+const finalData: WeatherData | any = props.test ? fakeData : finalApiData
 
+function thunderLevel() {
+	switch (finalData.current.condition.code) {
+		// Patchy light rain with thunder
+		case 1273: return 0.25;
+		// Moderate or heavy rain with thunder
+		case 1276: return 0.5;
+		// Torrential rain shower
+		case 1246: return 1.0;
+		// code to be executed if the condition.code doesn't match any cases
+		default: return 0;
+	}
+}
+
+const PARAMS = {
+	thunder: thunderLevel(),
+	temp_c: finalData.current.temp_c,
+	precip_mm: finalData.current.precip_mm,
+	factor: 1,
+}
+
+// sandbox
 const Shader = ref()
 const heroCanvas = ref()
 const sandbox = ref()
@@ -47,25 +74,19 @@ const photo = $img(props.texture, { format: 'webp' })
 
 // Listeners
 const { width: canvaswidth, height: canvasheight } = useWindowSize()
-const { y } = useWindowScroll()
 
-watch([y,canvaswidth, canvasheight], () => {
-	// set chroma by scroll
-	// const pctCanvasScroll = (y.value/heroCanvas.value.clientHeight)*2
-	// sandbox.value.setUniform("u_scroll", pctCanvasScroll > 1 ?  1 : pctCanvasScroll)
-	
+watch([canvaswidth, canvasheight], () => {
 	// set canvas resolution
 	sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight])
-	}
+}
 )
-
 function doSomethingOnLoad() {
-	const iwidth = document.getElementById("imgPlaceholder").clientWidth
-	const iheight = document.getElementById("imgPlaceholder").clientHeight
+	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
+	const iheight: any = document.getElementById("imgPlaceholder")? document.getElementById("imgPlaceholder")?.clientHeight : 10
 	// resolve-lygia package:
-	data.value.current.precip_mm > 0 ? Shader.value = resolveLygia(rainFragment) : Shader.value = resolveLygia(norainFragment)
-	// fakeData.current.precip_mm > 0 ? Shader.value = resolveLygia(rainFragment) : Shader.value = resolveLygia(norainFragment)
+	Shader.value = resolveLygia(rainFragment)
 	// setup
+	// @ts-ignore //this is a hack. glslCanvas is loaded in the head html
 	sandbox.value = new GlslCanvas(heroCanvas.value)
 	heroCanvas.value.style.width = "100%"
 	heroCanvas.value.style.height = "100%"
@@ -75,37 +96,60 @@ function doSomethingOnLoad() {
 	sandbox.value.setUniform("u_resolution", [heroCanvas.value.clientHeight, heroCanvas.value.clientWidth])
 	// Load a new texture and assign it to "uniform sampler2D u_texture":
 	sandbox.value.setUniform("u_tex0", photo)
-	sandbox.value.setUniform("textureAspect", iwidth/iheight)
+	sandbox.value.setUniform("u_tex0Resolution", iwidth / iheight)
+	// weather
 	sandbox.value.setUniform("u_test", props.test)
-	sandbox.value.setUniform("u_colorA", props.colorA[0], props.colorA[1], props.colorA[2])
-	sandbox.value.setUniform("u_colorB", props.colorB[0], props.colorB[1], props.colorB[2])
+	sandbox.value.setUniform("thunder", PARAMS.thunder)
+	sandbox.value.setUniform("temp_c", finalData.current.temp_c)
+	sandbox.value.setUniform("precip_mm", finalData.current.precip_mm)
+
 	heroLoading.value = false;
 }
+
+const tweakpane = ref()
+onMounted(() => {
+	const pane = new Pane()
+	pane.on('change', (ev) => {
+		sandbox.value.setUniform("precip_mm", PARAMS.precip_mm)
+		sandbox.value.setUniform("temp_c", PARAMS.temp_c)
+		sandbox.value.setUniform("thunder", PARAMS.thunder)
+	})
+	const f1 = pane.addFolder({ title: 'debug', expanded: false })
+	f1.addBinding(PARAMS, 'thunder', { min: 0, max: 1, step: 0.25 })
+	f1.addBinding(PARAMS, 'temp_c', { min: 0, max: 40 })
+	f1.addBinding(PARAMS, 'precip_mm', { min: 0, max: 30 })
+})
+
+onUnmounted(() => {
+	// pane.dispose()
+})
 </script>
 
 <template>
 	<div id="divPortada" data-anchor="portada" class="relative h-screen">
+		<div ref="tweakpane" class="absolute"></div>
 		<NuxtImg :src="props.texture" id="imgPlaceholder" @load="doSomethingOnLoad" class="absolute" />
 		<canvas ref="heroCanvas" class="sticky top-0 max-h-screen w-full" />
 		<div v-show="heroLoading"
 			class="absolute top-0 w-full h-screen flex items-center justify-center bg-black text-gray-500 z-40">
-			<UIcon name="mdi-creation" class="text-4xl animate-pulse" />
+			<UIcon name="i-mdi-creation" class="text-4xl animate-pulse" />
 		</div>
 	</div>
-	<div class="absolute flex items-end justify-center inset-8">
-		<UCard class="max-w-max aspect-square bg-opacity-20">
-			<template #header>
-				<h1 class="text-center text-xl text-indigo-300">{{ data.current.condition.text }}</h1>
-			</template>
-			<img :src="data.current.condition.icon" class="w-16 mx-auto mb-6" />
-			<div class="flex justify-between space-x-2">
-				<UBadge color="indigo" size="lg" variant="soft">
-					<UIcon name="i-mdi-thermometer" />{{ data.current.temp_c }} °C
-				</UBadge>
-				<UBadge color="indigo" size="lg" variant="soft">
-					<UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data.current.precip_mm }} mm
-				</UBadge>
-			</div>
-		</UCard>
+	<div class="absolute flex items-end justify-center inset-8 text-sm">
+		<div class="bg-blue-950 bg-opacity-80 flex items-center space-x-4 pr-4 rounded-full">
+
+			<img :src="finalData.current.condition.icon" class="-m-2" />
+			
+			<h1 class="">{{ finalData.current.condition.text }}</h1>
+
+			<span class="flex items-center">
+				<UIcon name="i-mdi-thermometer" />{{ finalData.current.temp_c }} °C
+			</span>
+
+			<span class="flex items-center">
+				<UIcon name="i-mdi-weather-pouring" />&nbsp;{{ finalData.current.precip_mm }} mm
+			</span>
+
+		</div>
 	</div>
 </template>
