@@ -21,7 +21,7 @@ interface Props {
 
 const props: Props = defineProps({
 	texture: { type: String, default: '/images/TimeToForest_3.png' },
-	test: { type: Boolean, default: true },
+	test: { type: Boolean, default: false },
 })
 
 // test weather
@@ -135,10 +135,10 @@ onUnmounted(() => {
 			<UIcon name="i-mdi-creation" class="text-4xl animate-pulse" />
 		</div>
 	</div>
-	<div class="absolute flex items-end justify-center inset-8 text-sm">
-		<div class="bg-blue-950 bg-opacity-80 flex items-center space-x-4 pr-4 rounded-full">
+	<div class="absolute flex items-end justify-center inset-8 text-xs">
+		<div class="bg-gradient-to-t from-gray-950 to-gray-900 flex items-center space-x-4 pr-4 rounded-full">
 
-			<img :src="finalData.current.condition.icon" class="-m-2" />
+			<img :src="finalData.current.condition.icon" class="w-8 -mr-4" />
 			
 			<h1 class="">{{ finalData.current.condition.text }}</h1>
 
