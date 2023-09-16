@@ -132,7 +132,7 @@ function thunderLevel() {
 			<UIcon name="i-mdi-cloud-clock-outline" class="text-8xl animate-pulse" />
 		</div>
 	</div>
-	<div class="absolute flex items-end justify-center inset-8 text-xs">
+	<div class="absolute flex items-end justify-center inset-8">
 		<div class="bg-gradient-to-t from-gray-950 to-gray-900 flex items-center space-x-4 pr-4 rounded-full">
 
 			<img :src="finalData.current.condition.icon" class="w-8 -mr-4" />
