@@ -3,7 +3,6 @@
 import { resolveLygia } from 'resolve-lygia'
 import rainFragment from '~/assets/shaders/rain.frag?raw'
 // import GlslCanvas from 'glslCanvas'
-import { Pane } from 'tweakpane'
 
 //TODO: use package or minified js
 useHead({
@@ -42,25 +41,8 @@ const finalApiData = apiData.value
 // test weather check
 const finalData: WeatherData | any = props.test ? fakeData : finalApiData
 
-function thunderLevel() {
-	switch (finalData.current.condition.code) {
-		// Patchy light rain with thunder
-		case 1273: return 0.25;
-		// Moderate or heavy rain with thunder
-		case 1276: return 0.5;
-		// Torrential rain shower
-		case 1246: return 1.0;
-		// code to be executed if the condition.code doesn't match any cases
-		default: return 0;
-	}
-}
-
-const PARAMS = {
-	thunder: thunderLevel(),
-	temp_c: finalData.current.temp_c,
-	precip_mm: finalData.current.precip_mm,
-	factor: 1,
-}
+// modal
+const isOpen = ref(false)
 
 // sandbox
 const Shader = ref()
@@ -80,6 +62,15 @@ watch([canvaswidth, canvasheight], () => {
 	sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight])
 }
 )
+
+watchImmediate(finalData, (obj) => {
+	if (sandbox.value) {
+		// sandbox.value.setUniform("thunder", finalData.value.thunder)
+		sandbox.value.setUniform("temp_c", finalData.current.temp_c)
+		sandbox.value.setUniform("precip_mm", finalData.current.precip_mm)
+	}
+})
+
 function doSomethingOnLoad() {
 	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
 	const iheight: any = document.getElementById("imgPlaceholder")? document.getElementById("imgPlaceholder")?.clientHeight : 10
@@ -99,35 +90,41 @@ function doSomethingOnLoad() {
 	sandbox.value.setUniform("u_tex0Resolution", iwidth / iheight)
 	// weather
 	sandbox.value.setUniform("u_test", props.test)
-	sandbox.value.setUniform("thunder", PARAMS.thunder)
+	sandbox.value.setUniform("thunder", thunderLevel())
 	sandbox.value.setUniform("temp_c", finalData.current.temp_c)
 	sandbox.value.setUniform("precip_mm", finalData.current.precip_mm)
 
 	heroLoading.value = false;
 }
 
-const tweakpane = ref()
-onMounted(() => {
-	const pane = new Pane()
-	pane.on('change', (ev) => {
-		sandbox.value.setUniform("precip_mm", PARAMS.precip_mm)
-		sandbox.value.setUniform("temp_c", PARAMS.temp_c)
-		sandbox.value.setUniform("thunder", PARAMS.thunder)
-	})
-	const f1 = pane.addFolder({ title: 'debug', expanded: false })
-	f1.addBinding(PARAMS, 'thunder', { min: 0, max: 1, step: 0.25 })
-	f1.addBinding(PARAMS, 'temp_c', { min: 0, max: 40 })
-	f1.addBinding(PARAMS, 'precip_mm', { min: 0, max: 30 })
-})
+function thunderLevel() {
+	switch (finalData.current.condition.code) {
+		// Patchy light rain with thunder
+		case 1273: return 0.25;
+		// Moderate or heavy rain with thunder
+		case 1276: return 0.5;
+		// Torrential rain shower
+		case 1246: return 1.0;
+		// code to be executed if the condition.code doesn't match any cases
+		default: return 0;
+	}
+}
 
-onUnmounted(() => {
-	// pane.dispose()
-})
 </script>
 
 <template>
 	<div id="divPortada" data-anchor="portada" class="relative h-screen">
 		<div ref="tweakpane" class="absolute"></div>
+		<UButton icon="i-mdi-cog" variant="link" @click="isOpen = true" class="absolute m-4 z-10" />
+		<UModal v-model="isOpen">
+			<div class="p-4">
+				<span class="block">Temp:</span>
+				<URange v-model="finalData.current.temp_c" size="sm" :min="0" :max="40" />
+				<span class="mt-4 block">Precipitation:</span>
+				<URange v-model="finalData.current.precip_mm" size="sm" :min="0" :max="20" />
+				<span class="mt-4 text-xs block text-center text-gray-500">click outside to dismiss or <UKbd value="Esc" /></span>
+			</div>
+		</UModal>
 		<NuxtImg :src="props.texture" id="imgPlaceholder" @load="doSomethingOnLoad" class="absolute" />
 		<canvas ref="heroCanvas" class="sticky top-0 max-h-screen w-full" />
 		<div v-show="heroLoading"

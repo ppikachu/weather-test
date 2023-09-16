@@ -17,9 +17,6 @@ dependencies:
   glslCanvas:
     specifier: ^0.2.6
     version: 0.2.6
-  tweakpane:
-    specifier: ^4.0.1
-    version: 4.0.1
 
 devDependencies:
   '@nuxt/devtools':
