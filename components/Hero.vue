@@ -23,9 +23,6 @@ const props: Props = defineProps({
 	test: { type: Boolean, default: false },
 })
 
-// test weather
-import fakeData from '~/assets/sample-data-rain.json'
-
 // api weather
 const config = useRuntimeConfig()
 const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q=-34.58,-58.39'
@@ -39,7 +36,8 @@ const options: object = {
 const { data: apiData } = await useFetch(url, options)
 const finalApiData = apiData.value
 // test weather check
-const finalData: WeatherData | any = props.test ? fakeData : finalApiData
+import fakeData from '~/assets/sample-data-rain.json'
+const finalData: WeatherData | any = ref(props.test ? fakeData : finalApiData)
 
 // modal
 const isOpen = ref(false)
@@ -63,11 +61,11 @@ watch([canvaswidth, canvasheight], () => {
 }
 )
 
-watchImmediate(finalData, (obj) => {
+watch(finalData.value, () => {
 	if (sandbox.value) {
 		// sandbox.value.setUniform("thunder", finalData.value.thunder)
-		sandbox.value.setUniform("temp_c", finalData.current.temp_c)
-		sandbox.value.setUniform("precip_mm", finalData.current.precip_mm)
+		sandbox.value.setUniform("temp_c", finalData.value.current.temp_c)
+		sandbox.value.setUniform("precip_mm", finalData.value.current.precip_mm)
 	}
 })
 
@@ -91,14 +89,14 @@ function doSomethingOnLoad() {
 	// weather
 	sandbox.value.setUniform("u_test", props.test)
 	sandbox.value.setUniform("thunder", thunderLevel())
-	sandbox.value.setUniform("temp_c", finalData.current.temp_c)
-	sandbox.value.setUniform("precip_mm", finalData.current.precip_mm)
+	sandbox.value.setUniform("temp_c", finalData.value.current.temp_c)
+	sandbox.value.setUniform("precip_mm", finalData.value.current.precip_mm)
 
 	heroLoading.value = false;
 }
 
 function thunderLevel() {
-	switch (finalData.current.condition.code) {
+	switch (finalData.value.current.condition.code) {
 		// Patchy light rain with thunder
 		case 1273: return 0.25;
 		// Moderate or heavy rain with thunder
@@ -122,15 +120,22 @@ function thunderLevel() {
 				<URange v-model="finalData.current.temp_c" size="sm" :min="0" :max="40" />
 				<span class="mt-4 block">Precipitation:</span>
 				<URange v-model="finalData.current.precip_mm" size="sm" :min="0" :max="20" />
-				<span class="mt-4 text-xs block text-center text-gray-500">click outside to dismiss or <UKbd value="Esc" /></span>
+				<span class="mt-4 text-xs block text-center text-gray-500">click outside to dismiss or press <UKbd value="Esc" /></span>
 			</div>
 		</UModal>
+
 		<NuxtImg :src="props.texture" id="imgPlaceholder" @load="doSomethingOnLoad" class="absolute" />
 		<canvas ref="heroCanvas" class="sticky top-0 max-h-screen w-full" />
-		<div v-show="heroLoading"
-			class="absolute top-0 w-full h-screen flex items-center justify-center bg-black text-gray-500 z-40">
-			<UIcon name="i-mdi-cloud-clock-outline" class="text-8xl animate-pulse" />
+
+		<div v-show="heroLoading" class="absolute top-0 w-full h-screen flex items-center justify-center bg-black z-40">
+			<!-- <UIcon name="i-mdi-cloud-clock-outline" /> -->
+			<UAvatar icon="i-mdi-cloud-clock-outline" size="2xl" class="animate-pulse" :ui="{
+				background: 'bg-indigo-500 dark:bg-indigo-800',
+				text: 'dark:text-white'
+			}" />
+
 		</div>
+
 	</div>
 	<div class="absolute flex items-end justify-center inset-8">
 		<div class="bg-gradient-to-t from-gray-950 to-gray-900 flex items-center space-x-4 pr-4 rounded-full">

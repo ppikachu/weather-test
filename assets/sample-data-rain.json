@@ -26,7 +26,7 @@
     "wind_dir": "ENE",
     "pressure_mb": 1016.0,
     "pressure_in": 30.0,
-    "precip_mm": 10,
+    "precip_mm": 0,
     "precip_in": 0.1,
     "humidity": 54,
     "cloud": 0,
