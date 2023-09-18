@@ -20,7 +20,7 @@ interface Props {
 
 const props: Props = defineProps({
 	texture: { type: String, default: '/images/TimeToForest_3.png' },
-	test: { type: Boolean, default: true },
+	test: { type: Boolean, default: false },
 })
 
 // api weather
