@@ -20,7 +20,7 @@ interface Props {
 
 const props: Props = defineProps({
 	texture: { type: String, default: '/images/TimeToForest_3.png' },
-	test: { type: Boolean, default: false },
+	test: { type: Boolean, default: true },
 })
 
 // api weather
@@ -47,6 +47,12 @@ const Shader = ref()
 const heroCanvas = ref()
 const sandbox = ref()
 const heroLoading = ref(true)
+const thunderLevels = [
+	{condition: "Rain", code: "1000"},
+	{condition: "patchy light rain with thunder", code: "1273"},
+	{condition: "moderate or heavy rain with thunder", code: "1276"},
+	{condition: "torrential rain shower", code: "1246"},
+]
 
 // TODO: size?, format?, something or fix this!
 const $img = useImage()
@@ -63,7 +69,8 @@ watch([canvaswidth, canvasheight], () => {
 
 watch(finalData.value, () => {
 	if (sandbox.value) {
-		// sandbox.value.setUniform("thunder", finalData.value.thunder)
+		console.log(thunderLevel(finalData.value.current.condition.code))
+		sandbox.value.setUniform("thunder", thunderLevel(finalData.value.current.condition.code))
 		sandbox.value.setUniform("temp_c", finalData.value.current.temp_c)
 		sandbox.value.setUniform("precip_mm", finalData.value.current.precip_mm)
 	}
@@ -88,15 +95,16 @@ function doSomethingOnLoad() {
 	sandbox.value.setUniform("u_tex0Resolution", iwidth / iheight)
 	// weather
 	sandbox.value.setUniform("u_test", props.test)
-	sandbox.value.setUniform("thunder", thunderLevel())
+	sandbox.value.setUniform("thunder", thunderLevel(finalData.value.current.condition.code))
 	sandbox.value.setUniform("temp_c", finalData.value.current.temp_c)
 	sandbox.value.setUniform("precip_mm", finalData.value.current.precip_mm)
 
 	heroLoading.value = false;
 }
-
-function thunderLevel() {
-	switch (finalData.value.current.condition.code) {
+function thunderLevel(code: string | number) {
+	switch (typeof code === "number"? code : parseInt(code)) {
+		// Clear sky
+		case 1000: return 0.0;
 		// Patchy light rain with thunder
 		case 1273: return 0.25;
 		// Moderate or heavy rain with thunder
@@ -114,13 +122,22 @@ function thunderLevel() {
 	<div id="divPortada" data-anchor="portada" class="relative h-screen">
 		<div ref="tweakpane" class="absolute"></div>
 		<UButton icon="i-mdi-cog" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
-		<UModal v-model="isOpen">
-			<div class="p-4">
-				<span class="block">Temp:</span>
-				<URange v-model="finalData.current.temp_c" size="sm" :min="0" :max="40" />
-				<span class="mt-4 block">Precipitation:</span>
-				<URange v-model="finalData.current.precip_mm" size="sm" :min="0" :max="20" />
-				<span class="mt-4 text-xs block text-center text-gray-500">click outside to dismiss or press <UKbd value="Esc" /></span>
+		<UModal v-model="isOpen" :overlay="false" class="text-sm">
+			<div class="p-4 space-y-4">
+				<div class="flex items-center space-x-2">
+					<span class="w-32 text-right">Rain condition:</span>
+					<USelect v-model="finalData.current.condition.code" :options="thunderLevels" option-attribute="condition" value-attribute="code" size="sm" class="w-full" />
+				</div>
+				<div class="flex items-center space-x-2">
+					<span class="w-32 text-right">Temp:</span>
+					<URange v-model="finalData.current.temp_c" size="sm" :min="0" :max="40" />
+				</div>
+				<div class="flex items-center space-x-2">
+
+					<span class="w-32 text-right">Precipitation:</span>
+					<URange v-model="finalData.current.precip_mm" size="sm" :min="0" :max="20" :step="0.1" />
+				</div>
+				<span class="text-xs block text-center text-gray-500">click outside to dismiss or press <UKbd value="Esc" /></span>
 			</div>
 		</UModal>
 

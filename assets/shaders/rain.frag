@@ -17,8 +17,8 @@ uniform float temp_c;
 #define BOXBLUR_2D
 #define BOXBLUR_ITERATIONS 4
 #include "lygia/filter/boxBlur.glsl"
-#define GAUSSIANBLUR_2D
-#include "lygia/filter/gaussianBlur.glsl"
+// #define GAUSSIANBLUR_2D
+// #include "lygia/filter/gaussianBlur.glsl"
 #include "lygia/math/map.glsl"
 #include "lygia/generative/cnoise.glsl"
 
@@ -32,11 +32,6 @@ uniform float temp_c;
 
 // A video of the effect can be found here:
 // https://www.youtube.com/watch?v=uiF5Tlw22PI&feature=youtu.be
-
-// Music - Alone In The Dark - Vadim Kiselev
-// https://soundcloud.com/ahmed-gado-1/sad-piano-alone-in-the-dark
-// Rain sounds:
-// https://soundcloud.com/elirtmusic/sleeping-sound-rain-and-thunder-1-hours
 // #endregion credits
 
 #define CHEAP_NORMALS
@@ -140,7 +135,7 @@ void main() {
 	float minBlur = .1;
 	float story = 0.;
 
-	float staticDrops = S(-.5, 1., rainAmount)*2.;
+	float staticDrops = S(-.5, 1.5, rainAmount)*2.;
 	float layer1 = S(.25, .75, rainAmount);
 	float layer2 = S(.0, .5, rainAmount);
 	vec2 c = Drops(uv, t, staticDrops, layer1, layer2);
@@ -165,11 +160,12 @@ void main() {
 	float colFade = sin(t*.2)*.5+.5+story;
 	// col *= mix(vec3(1.), vec3(.8, .9, 1.3), colFade);		// subtle color shift
 	float fade = S(0., 10., u_time);															// fade in at the start
+
+	float blurmask = 0.; // new focus
 	float lightning = 0.;
-	
 	// raining!
 	if (precip_mm > 0.0) {
-		float blurmask = mix(maxBlur-c.y * .6, minBlur, S(.2, .5, c.x)); // new focus
+		blurmask = mix(maxBlur-c.y * .6, minBlur, S(.2, .5, c.x)); // new focus
 		float kernel_size = max(1.0, blurmask * 4.0);
 
 		// col = vec3(normal.x,normal.y,0.);		// debug normals
@@ -189,22 +185,24 @@ void main() {
 
 	// not raining!
 	else {
-		float d3 = cnoise(vec2(v_texcoord_aspect.x * 16., v_texcoord_aspect.y * 3. - u_time*2.))*.5+.5;
-		float mask = (d3*(1. - v_texcoord.y));
-		float kernel_size = max(1.0, mask * 4.0);
+		float heat = cnoise(vec2(v_texcoord_aspect.x * 16., v_texcoord_aspect.y * 3. - u_time*2.))*.5+.5;
+		blurmask = heat*(1. - v_texcoord.y)*temp_c*.0002;
 
-		col = boxBlur(u_tex0, v_texcoord_aspect+mask*temp_c*.0002, vec2(mask*temp_c*.0002)).rgb;
-		// col = vec3(mask);						// debug mask
-		// col = vec3(-d3, d3, 0.);			// debug d3
-		// col = vec3(-mask, mask, 0.);	// debug mask
+		col = boxBlur(u_tex0, v_texcoord_aspect+blurmask, vec2(blurmask)).rgb;
+
+		// col = vec3(blurmask);						// debug blurmask
+		// col = vec3(-d3, heat, 0.);			// debug heat
+		// col = vec3(-mask, blurmask, 0.);	// debug blurmask
 	}
-
+	float heatloop = map(temp_c, 10., 40., -.2, .6) * (sin(t*2.*sin(t*10.))*.2+.7);
+	col.r += v_texcoord.y * heatloop;									// heat
 	col *= 1.-dot(v_texcoord -= .5, v_texcoord);			// vignette
 	col *= fade;																			// composite start and end fade
 
 	// debug:
- 	vec2 debug_pos = vec2(-0.05,-0.05);
-	// col += digits(v_texcoord + debug_pos, lightning);
+ 	vec2 debug_pos = vec2(.45, .45);
+	// col += digits(v_texcoord + debug_pos, thunder);
+	// col += digits(v_texcoord + debug_pos, heatloop);
 
 	gl_FragColor = vec4(col, 1.);
 }
