@@ -191,7 +191,7 @@ function setCondition(code: any) {
 
 	<div class="absolute flex items-end justify-center inset-8">
 		<div v-if="apidata" class="bg-gradient-to-t from-gray-950 to-gray-900 flex items-center space-x-4 px-4 py-1 rounded-full">
-			<img :src="apidata.current.condition.icon" class="w-8 -mr-4 -ml-2" />
+			<img :src="apidata.current.condition.icon" class="w-8 -mr-3 -ml-2" />
 			<h1 class="">{{ apidata.current.condition.text }}</h1>
 			<span class="flex items-center">
 				<UIcon name="i-mdi-thermometer" />{{ apidata.current.temp_c }} °C
