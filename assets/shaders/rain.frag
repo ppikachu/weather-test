@@ -13,6 +13,7 @@ uniform float thunder;
 uniform float precip_mm;
 uniform float temp_c;
 
+#define DIGITS_SIZE vec2(.015, .02)
 #include "lygia/draw/digits.glsl"
 #define BOXBLUR_2D
 #define BOXBLUR_ITERATIONS 4
@@ -200,8 +201,8 @@ void main() {
 	col *= fade;																			// composite start and end fade
 
 	// debug:
- 	vec2 debug_pos = vec2(.45, .45);
-	// col += digits(v_texcoord + debug_pos, thunder);
+ 	vec2 debug_pos = vec2(-.2, -.5);
+	// col += digits(v_texcoord_aspect + debug_pos, thunder);
 	// col += digits(v_texcoord + debug_pos, heatloop);
 
 	gl_FragColor = vec4(col, 1.);
