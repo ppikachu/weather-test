@@ -151,9 +151,10 @@ function getHourofDay(dateString: string) {
 function updateUniforms() {
 	if (sandbox.value && apidata.value) {
 		const { current } = apidata.value
-		const { temp_c, precip_mm, condition } = current
+		const { is_day, temp_c, precip_mm, condition } = current
 		// set canvas resolution
 		sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) // canvas resolution
+		sandbox.value.setUniform("is_day", is_day)
 		sandbox.value.setUniform("thunder", thunderLevel(condition.code))
 		sandbox.value.setUniform("temp_c", temp_c)
 		sandbox.value.setUniform("precip_mm", precip_mm)

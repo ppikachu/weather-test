@@ -5,7 +5,7 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform sampler2D u_tex0;
-uniform int is_day;
+uniform bool is_day;
 uniform vec2 u_tex0Resolution;
 uniform float u_time;
 uniform bool onoff;
@@ -195,6 +195,10 @@ void main() {
 		// col = vec3(-d3, heat, 0.);			// debug heat
 		// col = vec3(-mask, blurmask, 0.);	// debug blurmask
 	}
+	if (!is_day) {
+		// fake sunrise and sunset
+		col -= .05;
+	}
 	float heatloop = map(temp_c, 10., 40., -.2, .6) * (sin(t*2.*sin(t*10.))*.2+.7);
 	col.r += v_texcoord.y * heatloop;									// heat
 	col *= 1.-dot(v_texcoord -= .5, v_texcoord);			// vignette
@@ -202,10 +206,7 @@ void main() {
 
 	// debug:
  	vec2 debug_pos = vec2(-.2, -.5);
-	if (is_day==1) {
-		col += digits(v_texcoord_aspect + debug_pos, thunder);
-	}
-	// col += digits(v_texcoord_aspect + debug_pos, thunder);
+	// col += digits(v_texcoord_aspect + debug_pos, is_day);
 	// col += digits(v_texcoord + debug_pos, heatloop);
 
 	gl_FragColor = vec4(col, 1.);
