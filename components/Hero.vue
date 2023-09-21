@@ -188,8 +188,14 @@ function updateConditionData() {
 					<span class="w-32 text-right">Precipitation:</span>
 					<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" :step="0.1" />
 				</div>
+				<UAlert title="" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft">
+					<template #description>
+						Hora: {{ apidata?.location ? getHourofDay(apidata.location.localtime) : '2023-09-07 12:00' }}
+					</template>
+				</UAlert>
 			</div>
-			<span class="text-xs mb-4 text-center text-gray-500">{{ apidata?.location ? getHourofDay(apidata.location.localtime) : '2023-09-07 12:00' }}</span>			<span class="text-xs mb-4 text-center text-gray-500">click outside to dismiss or press <UKbd value="Esc" /></span>
+			<span class="text-xs mb-4 text-center text-gray-500">click outside to dismiss or press <UKbd value="Esc" />
+			</span>
 		</UModal>
 
 		<canvas ref="heroCanvas" class="sticky" />
