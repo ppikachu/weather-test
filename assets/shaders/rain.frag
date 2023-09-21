@@ -5,7 +5,7 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform sampler2D u_tex0;
-uniform sampler2D u_tex1;
+uniform int is_day;
 uniform vec2 u_tex0Resolution;
 uniform float u_time;
 uniform bool onoff;
@@ -202,6 +202,9 @@ void main() {
 
 	// debug:
  	vec2 debug_pos = vec2(-.2, -.5);
+	if (is_day==1) {
+		col += digits(v_texcoord_aspect + debug_pos, thunder);
+	}
 	// col += digits(v_texcoord_aspect + debug_pos, thunder);
 	// col += digits(v_texcoord + debug_pos, heatloop);
 
