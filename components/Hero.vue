@@ -47,6 +47,7 @@ const shader = ref()
 const heroCanvas = ref()
 const sandbox = ref()
 const heroLoading = ref(true)
+const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
 const thunderLevels = [
 	{code: 1000, thlevel: 0.00, condition: "Clear", icon: "113"},
 	{code: 1003, thlevel: 0.00, condition: "Partly cloudy", icon: "116"},
@@ -106,7 +107,13 @@ const photo = $img(props.texture, { format: 'webp' })
 const { width: canvaswidth, height: canvasheight } = useWindowSize()
 watch([canvaswidth, canvasheight, apidata.value], () => {
 	updateUniforms()
-	updateConditionData()
+	// updateConditionData()
+})
+
+watch([hrs], () => {
+	// updateConditionData()
+	sandbox.value.setUniform("hrs", hrs.value)
+	// apidata.value.location.localtime = formatDateFromHour(getHourofDay(apidata.value?.location.localtime as string))
 })
 
 onMounted(() => {
@@ -148,6 +155,10 @@ function getHourofDay(dateString: string) {
 	const hour = dateObject.getHours()
 	return hour
 }
+function formatDateFromHour(hour: number) {
+	const dateObject = new Date(apidata.value?.location.localtime as string)
+	dateObject.setHours(hour)
+}
 function updateUniforms() {
 	if (sandbox.value && apidata.value) {
 		const { current } = apidata.value
@@ -174,7 +185,7 @@ function updateConditionData() {
 	<div id="divPortada" data-anchor="portada" class="relative h-screen">
 		<div ref="tweakpane" class="absolute"></div>
 		<UButton icon="i-mdi-cog" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
-		<UModal v-model="isOpen" :overlay="false" class="text-sm">
+		<UModal v-model="isOpen" :overlay="false" class="text-sm" :ui="{container: 'items-start'}">
 			<div v-if="apidata" class="p-4 space-y-4">
 				<div class="flex items-center space-x-2">
 					<span class="w-32 text-right">Rain condition:</span>
@@ -188,9 +199,17 @@ function updateConditionData() {
 					<span class="w-32 text-right">Precipitation:</span>
 					<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" :step="0.1" />
 				</div>
+				<div class="flex items-center space-x-2">
+					<span class="w-32 text-right">Time:</span>
+					<URange v-model="hrs" size="sm" :min="0" :max="24" :step="0.1" />
+				</div>
 				<UAlert title="" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft">
 					<template #description>
-						Hora: {{ apidata?.location ? getHourofDay(apidata.location.localtime) : '2023-09-07 12:00' }}
+						<div class="flex space-x-4 items-center">
+							<span>Hora: {{ hrs }}</span>
+							<span>|</span>
+							<span>Date: {{ apidata?.location ? apidata.location.localtime : '2023-09-07 12:00' }}</span>
+						</div>
 					</template>
 				</UAlert>
 			</div>

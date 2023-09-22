@@ -12,6 +12,7 @@ uniform bool onoff;
 uniform float thunder;
 uniform float precip_mm;
 uniform float temp_c;
+uniform float hrs;
 
 #define DIGITS_SIZE vec2(.015, .02)
 #include "lygia/draw/digits.glsl"
@@ -22,6 +23,7 @@ uniform float temp_c;
 // #include "lygia/filter/gaussianBlur.glsl"
 #include "lygia/math/map.glsl"
 #include "lygia/generative/cnoise.glsl"
+#include "lygia/color/palette.glsl"
 
 // #region credits
 // Heartfelt - by Martijn Steinrucken aka BigWings - 2017
@@ -125,7 +127,7 @@ vec2 Drops(vec2 uv, float t, float l0, float l1, float l2) {
 
 void main() {
 	vec3 col = vec3(0.);
-	vec2 v_texcoord = gl_FragCoord.xy / u_resolution.xy;
+	vec2 st = gl_FragCoord.xy / u_resolution.xy;
 	vec2 uv = (gl_FragCoord.xy -.5 * u_resolution.xy) / u_resolution.y;
 
 	float t = u_time * .2;
@@ -156,7 +158,7 @@ void main() {
 	float textureFrameRatio = (u_tex0Resolution.x / u_tex0Resolution.y) / frameAspect;
 	if(textureFrameRatio>1.0) scaleX = 1.0 / textureFrameRatio;
 	else scaleY = textureFrameRatio;
-	vec2 v_texcoord_aspect = vec2(scaleX, scaleY) * (v_texcoord - 0.5) + 0.5;
+	vec2 v_texcoord_aspect = vec2(scaleX, scaleY) * (st - 0.5) + 0.5;
 
 	float colFade = sin(t*.2)*.5+.5+story;
 	// col *= mix(vec3(1.), vec3(.8, .9, 1.3), colFade);		// subtle color shift
@@ -187,7 +189,7 @@ void main() {
 	// not raining!
 	else {
 		float heat = cnoise(vec2(v_texcoord_aspect.x * 16., v_texcoord_aspect.y * 3. - u_time*2.))*.5+.5;
-		blurmask = heat*(1. - v_texcoord.y)*temp_c*.0002;
+		blurmask = heat*(1. - st.y) * temp_c * .0002;
 
 		col = boxBlur(u_tex0, v_texcoord_aspect+blurmask, vec2(blurmask)).rgb;
 
@@ -200,14 +202,17 @@ void main() {
 		col -= .05;
 	}
 	float heatloop = map(temp_c, 10., 40., -.2, .6) * (sin(t*2.*sin(t*10.))*.2+.7);
-	col.r += v_texcoord.y * heatloop;									// heat
-	col *= 1.-dot(v_texcoord -= .5, v_texcoord);			// vignette
+	col.r += st.y * heatloop;									// heat
+	vec3 hrsspectrum = palette(hrs/24.,vec3(1.0,0.4,.8),vec3(1.3,-.9,0.3),vec3(1.0,1.0,1.0),vec3(.5,.0,.5));
+	col *= hrsspectrum;
+	col *= 1.-dot(st -= .5, st);			// vignette
 	col *= fade;																			// composite start and end fade
 
 	// debug:
  	vec2 debug_pos = vec2(-.2, -.5);
-	// col += digits(v_texcoord_aspect + debug_pos, is_day);
-	// col += digits(v_texcoord + debug_pos, heatloop);
+	// col = palette(st.y,vec3(0.5,0.5,0.5),vec3(0.5,0.5,0.5),vec3(1.,1.,1.),vec3(0.0,0.1,0.2));
+	// col = hrsspectrum;
+	// col += digits(st + debug_pos, heatloop);
 
 	gl_FragColor = vec4(col, 1.);
 }
