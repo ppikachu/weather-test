@@ -47,9 +47,10 @@ const shader = ref()
 const heroCanvas = ref()
 const sandbox = ref()
 const heroLoading = ref(true)
-const expNormals = ref(false)
 const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
 const location = useBrowserLocation()
+const { isMobile } = useDevice()
+const expNormals = ref(isMobile ? 0 : 1)
 const thunderLevels = [
 	{code: 1000, thlevel: 0.00, condition: "Clear", icon: "113"},
 	{code: 1003, thlevel: 0.00, condition: "Partly cloudy", icon: "116"},
