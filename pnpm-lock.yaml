@@ -8,6 +8,9 @@ dependencies:
   '@iconify-json/mdi':
     specifier: ^1.1.54
     version: 1.1.54
+  '@nuxtjs/device':
+    specifier: ^3.1.1
+    version: 3.1.1(rollup@2.79.1)
   '@vite-pwa/nuxt':
     specifier: ^0.1.1
     version: 0.1.1(@nuxt/kit@3.7.3)(vite-plugin-pwa@0.16.5)
@@ -2241,6 +2244,16 @@ packages:
       - rollup
       - supports-color
     dev: true
+
+  /@nuxtjs/device@3.1.1(rollup@2.79.1):
+    resolution: {integrity: sha512-wHTziEevt1hdgePQwPhEedWW3COalhP0YGVB+sGLqSrKujX8vdz7lcBFB01KIftpaP8kY5H8pssibNaJbxGcYw==}
+    dependencies:
+      '@nuxt/kit': 3.7.3(rollup@2.79.1)
+      defu: 6.1.2
+    transitivePeerDependencies:
+      - rollup
+      - supports-color
+    dev: false
 
   /@nuxtjs/tailwindcss@6.8.0(rollup@2.79.1)(webpack@5.88.2):
     resolution: {integrity: sha512-jzuvD1nfA2BPnSbHtKK0aiI51ndMa7lNGL1iDEFuEPsltzilZ9ED7zOP6niGTrImg0n5Yt4GEJpixi6yWwp9Hw==}

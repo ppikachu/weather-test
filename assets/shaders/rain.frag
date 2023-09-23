@@ -4,8 +4,10 @@ precision highp float;
 #endif
 
 // glslviewer commands:
-// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e  -e precip_mm,1 -e hrs,12 -e debug,on -l -x 10 -y 100
+// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e is_day,1 -e precip_mm,1 -e hrs,12 -e debug,on -e textures,off -l -x 10 -y 80
 // record,demo.mp4,3,10
+
+// https://www.shadertoy.com/view/tlSBDw
 
 // #region credits
 // Heartfelt - by Martijn Steinrucken aka BigWings - 2017
@@ -142,15 +144,18 @@ void main() {
 	float layer1 = S(.25, .75, rainAmount);
 	float layer2 = S(.0, .5, rainAmount);
 	vec2 c = Drops(uv, t, staticDrops, layer1, layer2);
+
 	vec2 normal = vec2(.0);
+	// cheap normals (3x cheaper, but 2 times shittier ;))
 	if (cheap_normals) {
-		normal = vec2(dFdx(c.x), dFdy(c.x));// cheap normals (3x cheaper, but 2 times shittier ;))
+		normal = vec2(dFdx(c.x), dFdy(c.x));
 	}
+	// expensive normals
 	else {
 		vec2 e = vec2(.001, 0.);
 		float cx = Drops(uv+e, t, staticDrops, layer1, layer2).x;
 		float cy = Drops(uv+e.yx, t, staticDrops, layer1, layer2).x;
-		normal = vec2(cx-c.x, cy-c.x);		// expensive normals
+		normal = vec2(cx-c.x, cy-c.x);
 	}
 		
 	//FIT TEXTURE

@@ -1,7 +1,13 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 	// devtools: { enabled: true },
-	modules: ["@nuxt/ui", "@nuxt/image", "@vueuse/nuxt", "@vite-pwa/nuxt"],
+	modules: [
+		"@nuxt/ui",
+		"@nuxt/image",
+		"@vueuse/nuxt",
+		"@vite-pwa/nuxt",
+		"@nuxtjs/device",
+	],
 	runtimeConfig: {
 		public: {
 			RapidAPIKey: process.env.RapidAPIKey,

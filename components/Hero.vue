@@ -49,6 +49,7 @@ const sandbox = ref()
 const heroLoading = ref(true)
 const expNormals = ref(false)
 const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
+const location = useBrowserLocation()
 const thunderLevels = [
 	{code: 1000, thlevel: 0.00, condition: "Clear", icon: "113"},
 	{code: 1003, thlevel: 0.00, condition: "Partly cloudy", icon: "116"},
@@ -110,10 +111,10 @@ watch([canvaswidth, canvasheight, apidata.value], () => {
 	updateUniforms()
 })
 
-watch([hrs], () => {
+watch([hrs, expNormals], () => {
 	// updateConditionData()
 	sandbox.value.setUniform("hrs", hrs.value)
-	// apidata.value.location.localtime = formatDateFromHour(getHourofDay(apidata.value?.location.localtime as string))
+	sandbox.value.setUniform("cheap_normals", expNormals ? 1 : 0)
 })
 
 onMounted(() => {
@@ -133,6 +134,7 @@ onMounted(() => {
 	// weather
 	updateUniforms()
 	sandbox.value.setUniform("hrs", hrs.value)
+	sandbox.value.setUniform("cheap_normals", expNormals ? 1 : 0)
 	heroLoading.value = false
 })
 function thunderLevel(code: any) {
@@ -170,7 +172,6 @@ function updateUniforms() {
 		sandbox.value.setUniform("thunder", thunderLevel(condition.code))
 		sandbox.value.setUniform("temp_c", temp_c)
 		sandbox.value.setUniform("precip_mm", precip_mm)
-		sandbox.value.setUniform("cheap_normals", expNormals ? 1 : 0)
 	}
 }
 function updateConditionData() {
@@ -189,32 +190,37 @@ function updateConditionData() {
 		<UButton icon="i-mdi-cog" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
 		<UModal v-model="isOpen" :overlay="false" class="text-sm" :ui="{container: 'items-start'}">
 			<div v-if="apidata" class="p-4 space-y-4">
-				<div class="flex items-center space-x-2">
-					<span class="w-32 text-right">Rain condition:</span>
-					<USelect v-model="apidata.current.condition.code" :options="thunderLevels" option-attribute="condition" value-attribute="code" size="sm" class="w-full" />
-				</div>
-				<div class="flex items-center space-x-2">
-					<span class="w-32 text-right">Temp:</span>
-					<URange v-model="apidata.current.temp_c" size="sm" :min="0" :max="40" />
-				</div>
-				<div class="flex items-center space-x-2">
-					<span class="w-32 text-right">Precipitation:</span>
-					<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" :step="0.1" />
-				</div>
-				<div class="flex items-center space-x-2">
-					<span class="w-32 text-right">Time:</span>
-					<URange v-model="hrs" size="sm" :min="0" :max="24" :step="0.1" />
-				</div>
-				<UAlert title="" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft">
+				<UAlert v-if="location.hostname === 'localhost'" title="" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft">
+					<template #title>
+						<div class="flex flex-col">
+							Debug
+						</div>
+					</template>
 					<template #description>
-						<div class="flex space-x-4 items-center">
+						<div class="flex flex-col">
 							<span>Hora: {{ hrs }}</span>
-							<span>|</span>
 							<span>Date: {{ apidata?.location ? apidata.location.localtime : '2023-09-07 12:00' }}</span>
-							<UCheckbox v-model="expNormals" size="sm" name="normals" label="X normals" />
+							<!-- <span>route: {{ location }}</span> -->
 						</div>
 					</template>
 				</UAlert>
+				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
+					<span class="md:w-32 shrink-0">Rain condition:</span>
+					<USelect v-model="apidata.current.condition.code" :options="thunderLevels" option-attribute="condition" value-attribute="code" size="sm" class="w-full" />
+				</div>
+				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
+					<span class="md:w-32 shrink-0">Temp:</span>
+					<URange v-model="apidata.current.temp_c" size="sm" :min="0" :max="40" />
+				</div>
+				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
+					<span class="md:w-32 shrink-0">Precipitation:</span>
+					<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" :step="0.1" />
+				</div>
+				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
+					<span class="md:w-32 shrink-0">Time:</span>
+					<URange v-model="hrs" size="sm" :min="0" :max="24" :step="0.1" />
+				</div>
+				<UCheckbox v-model="expNormals" name="normals" label="X normals*" />
 			</div>
 			<span class="text-xs mb-4 text-center text-gray-500">click outside to dismiss or press <UKbd value="Esc" />
 			</span>
