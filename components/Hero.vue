@@ -221,7 +221,7 @@ function updateConditionData() {
 					<span class="md:w-32 shrink-0">Time:</span>
 					<URange v-model="hrs" size="sm" :min="0" :max="24" :step="0.1" />
 				</div>
-				<UCheckbox v-model="expNormals" name="normals" label="X normals*" />
+				<UCheckbox v-model="expNormals" name="normals" :label="'X normals* (' + expNormals + ')'" />
 			</div>
 			<span class="text-xs mb-4 text-center text-gray-500">click outside to dismiss or press <UKbd value="Esc" />
 			</span>
