@@ -1,10 +1,10 @@
-// #extension GL_OES_standard_derivatives : enable
+#extension GL_OES_standard_derivatives : enable
 #ifdef GL_ES
 precision highp float;
 #endif
 
 // glslviewer commands:
-// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e is_day,1 -e precip_mm,1 -e hrs,12 -e debug,on -l -x 10 -y 100
+// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e  -e precip_mm,1 -e hrs,12 -e debug,on -l -x 10 -y 100
 // record,demo.mp4,3,10
 
 // #region credits
@@ -18,7 +18,8 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform sampler2D u_tex0;
-uniform bool is_day;
+// uniform bool is_day;
+uniform bool cheap_normals;
 uniform vec2 u_tex0Resolution;
 uniform float u_time;
 uniform float thunder;
@@ -36,7 +37,7 @@ uniform float hrs;
 #include "lygia/math/map.glsl"
 #include "lygia/generative/cnoise.glsl"
 #include "lygia/color/palette.glsl"
-// #define CHEAP_NORMALS
+// #define cheap_normals
 
 // shadertoy emulation
 #define S(a, b, t) smoothstep(a, b, t)
@@ -141,16 +142,17 @@ void main() {
 	float layer1 = S(.25, .75, rainAmount);
 	float layer2 = S(.0, .5, rainAmount);
 	vec2 c = Drops(uv, t, staticDrops, layer1, layer2);
-	
-	#ifdef CHEAP_NORMALS
-		vec2 normal = vec2(dFdx(c.x), dFdy(c.x));// cheap normals (3x cheaper, but 2 times shittier ;))
-	#else
+	vec2 normal = vec2(.0);
+	if (cheap_normals) {
+		normal = vec2(dFdx(c.x), dFdy(c.x));// cheap normals (3x cheaper, but 2 times shittier ;))
+	}
+	else {
 		vec2 e = vec2(.001, 0.);
 		float cx = Drops(uv+e, t, staticDrops, layer1, layer2).x;
 		float cy = Drops(uv+e.yx, t, staticDrops, layer1, layer2).x;
-		vec2 normal = vec2(cx-c.x, cy-c.x);		// expensive normals
-	#endif
-	
+		normal = vec2(cx-c.x, cy-c.x);		// expensive normals
+	}
+		
 	//FIT TEXTURE
 	float scaleX = 1.0, scaleY = 1.0;
 	float frameAspect = u_resolution.x / u_resolution.y;
@@ -195,10 +197,6 @@ void main() {
 		// col = vec3(blurmask);						// debug blurmask
 		// col = vec3(-d3, heat, 0.);			// debug heat
 		// col = vec3(-mask, blurmask, 0.);	// debug blurmask
-	}
-	if (!is_day) {
-		// fake sunrise and sunset
-		// col -= .05;
 	}
 	float heatloop = map(temp_c, 10., 40., -.2, .6) * (sin(t*2.*sin(t*10.))*.2+.7);
 	vec3 contrastA = vec3(.6);

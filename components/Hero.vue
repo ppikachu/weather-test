@@ -47,6 +47,7 @@ const shader = ref()
 const heroCanvas = ref()
 const sandbox = ref()
 const heroLoading = ref(true)
+const expNormals = ref(false)
 const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
 const thunderLevels = [
 	{code: 1000, thlevel: 0.00, condition: "Clear", icon: "113"},
@@ -107,7 +108,6 @@ const photo = $img(props.texture, { format: 'webp' })
 const { width: canvaswidth, height: canvasheight } = useWindowSize()
 watch([canvaswidth, canvasheight, apidata.value], () => {
 	updateUniforms()
-	// updateConditionData()
 })
 
 watch([hrs], () => {
@@ -170,6 +170,7 @@ function updateUniforms() {
 		sandbox.value.setUniform("thunder", thunderLevel(condition.code))
 		sandbox.value.setUniform("temp_c", temp_c)
 		sandbox.value.setUniform("precip_mm", precip_mm)
+		sandbox.value.setUniform("cheap_normals", expNormals ? 1 : 0)
 	}
 }
 function updateConditionData() {
@@ -210,6 +211,7 @@ function updateConditionData() {
 							<span>Hora: {{ hrs }}</span>
 							<span>|</span>
 							<span>Date: {{ apidata?.location ? apidata.location.localtime : '2023-09-07 12:00' }}</span>
+							<UCheckbox v-model="expNormals" size="sm" name="normals" label="X normals" />
 						</div>
 					</template>
 				</UAlert>
