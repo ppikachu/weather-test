@@ -2,13 +2,10 @@
 	"files.associations": {
 			"*.css": "tailwindcss"
 	},
-	"editor.quickSuggestions": {
-			"strings": true
-	},
 	"glsl-canvas.textures": {
-		"0": "../../public/images/ordinaryheart_i05.jpg",
+		"0": "https://weather-test-livid.vercel.app/images/TimeToForest_3.png",
 		"1": "https://rawgit.com/actarian/plausible-brdf-shader/master/textures/noise/cloud-1.png",
 		"2": "https://rawgit.com/actarian/plausible-brdf-shader/master/textures/noise/cloud-2.jpg",        
-  },
-
+	},
+	"webgl-glsl-editor.diagnostics": false,
 }

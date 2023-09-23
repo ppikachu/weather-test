@@ -1,20 +1,32 @@
-#extension GL_OES_standard_derivatives : enable
+// #extension GL_OES_standard_derivatives : enable
 #ifdef GL_ES
 precision highp float;
 #endif
+
+// glslviewer commands:
+// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e is_day,1 -e precip_mm,1 -e hrs,12 -e debug,on -l -x 10 -y 100
+// record,demo.mp4,3,10
+
+// #region credits
+// Heartfelt - by Martijn Steinrucken aka BigWings - 2017
+// Email:countfrolic@gmail.com Twitter:@The_ArtOfCode
+// License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
+
+// A video of the effect can be found here:
+// https://www.youtube.com/watch?v=uiF5Tlw22PI&feature=youtu.be
+// #endregion credits
 
 uniform vec2 u_resolution;
 uniform sampler2D u_tex0;
 uniform bool is_day;
 uniform vec2 u_tex0Resolution;
 uniform float u_time;
-uniform bool onoff;
 uniform float thunder;
 uniform float precip_mm;
 uniform float temp_c;
 uniform float hrs;
 
-#define DIGITS_SIZE vec2(.015, .02)
+#define DIGITS_SIZE vec2(.025, .03)
 #include "lygia/draw/digits.glsl"
 #define BOXBLUR_2D
 #define BOXBLUR_ITERATIONS 4
@@ -24,20 +36,8 @@ uniform float hrs;
 #include "lygia/math/map.glsl"
 #include "lygia/generative/cnoise.glsl"
 #include "lygia/color/palette.glsl"
+// #define CHEAP_NORMALS
 
-// #region credits
-// Heartfelt - by Martijn Steinrucken aka BigWings - 2017
-// Email:countfrolic@gmail.com Twitter:@The_ArtOfCode
-// License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
-
-// 1. The glass gets foggy.
-// 2. Drops cut trails in the fog on the glass.
-
-// A video of the effect can be found here:
-// https://www.youtube.com/watch?v=uiF5Tlw22PI&feature=youtu.be
-// #endregion credits
-
-#define CHEAP_NORMALS
 // shadertoy emulation
 #define S(a, b, t) smoothstep(a, b, t)
 
@@ -129,7 +129,6 @@ void main() {
 	vec3 col = vec3(0.);
 	vec2 st = gl_FragCoord.xy / u_resolution.xy;
 	vec2 uv = (gl_FragCoord.xy -.5 * u_resolution.xy) / u_resolution.y;
-
 	float t = u_time * .2;
 	
 	float rainAmount = precip_mm * .1;								// adjust the amount of rain
@@ -156,7 +155,7 @@ void main() {
 	float scaleX = 1.0, scaleY = 1.0;
 	float frameAspect = u_resolution.x / u_resolution.y;
 	float textureFrameRatio = (u_tex0Resolution.x / u_tex0Resolution.y) / frameAspect;
-	if(textureFrameRatio>1.0) scaleX = 1.0 / textureFrameRatio;
+	if (textureFrameRatio>1.0) scaleX = 1.0 / textureFrameRatio;
 	else scaleY = textureFrameRatio;
 	vec2 v_texcoord_aspect = vec2(scaleX, scaleY) * (st - 0.5) + 0.5;
 
@@ -199,20 +198,25 @@ void main() {
 	}
 	if (!is_day) {
 		// fake sunrise and sunset
-		col -= .05;
+		// col -= .05;
 	}
 	float heatloop = map(temp_c, 10., 40., -.2, .6) * (sin(t*2.*sin(t*10.))*.2+.7);
-	col.r += st.y * heatloop;									// heat
-	vec3 hrsspectrum = palette(hrs/24.,vec3(1.0,0.4,.8),vec3(1.3,-.9,0.3),vec3(1.0,1.0,1.0),vec3(.5,.0,.5));
+	vec3 contrastA = vec3(.6);
+	vec3 contrastB = vec3(-.6);
+	vec3 colorshift = vec3(1.0);
+	vec3 colorshiftB = vec3(0.0, 0.1, 0.2);
+	vec3 hrsspectrum = palette(hrs/24.,contrastA,contrastB,colorshift,colorshiftB);
+	// vec3 hrsspectrum = palette(sin(u_time)*.5+.5,contrastA,contrastB,colorshift,colorshiftB);
+	// vec3 hrsspectrum = palette(12.,contrastA,contrastB,colorshift,colorshiftB);
 	col *= hrsspectrum;
+	// col.r += st.y * heatloop;									// heat
 	col *= 1.-dot(st -= .5, st);			// vignette
 	col *= fade;																			// composite start and end fade
 
 	// debug:
- 	vec2 debug_pos = vec2(-.2, -.5);
-	// col = palette(st.y,vec3(0.5,0.5,0.5),vec3(0.5,0.5,0.5),vec3(1.,1.,1.),vec3(0.0,0.1,0.2));
-	// col = hrsspectrum;
-	// col += digits(st + debug_pos, heatloop);
+ 	vec2 debug_pos = vec2(-.1, -.1);
+	// col = palette(v_texcoord_aspect.x,contrastA,contrastB,colorshift,colorshiftB);
+	col += digits(v_texcoord_aspect + debug_pos, (hrsspectrum.x+hrsspectrum.y+hrsspectrum.z)/3.);
 
 	gl_FragColor = vec4(col, 1.);
 }

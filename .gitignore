@@ -17,7 +17,7 @@ logs
 .DS_Store
 .fleet
 .idea
-
+lygia
 # Local env files
 .env
 .env.*

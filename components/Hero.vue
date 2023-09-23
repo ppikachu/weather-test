@@ -132,6 +132,7 @@ onMounted(() => {
 	sandbox.value.setUniform("u_tex0Resolution", iwidth / iheight)
 	// weather
 	updateUniforms()
+	sandbox.value.setUniform("hrs", hrs.value)
 	heroLoading.value = false
 })
 function thunderLevel(code: any) {
