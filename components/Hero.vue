@@ -115,7 +115,7 @@ watch([canvaswidth, canvasheight, apidata.value], () => {
 watch([hrs, expNormals], () => {
 	// updateConditionData()
 	sandbox.value.setUniform("hrs", hrs.value)
-	sandbox.value.setUniform("cheap_normals", expNormals ? 1 : 0)
+	sandbox.value.setUniform("cheap_normals", expNormals)
 })
 
 onMounted(() => {
@@ -135,7 +135,7 @@ onMounted(() => {
 	// weather
 	updateUniforms()
 	sandbox.value.setUniform("hrs", hrs.value)
-	sandbox.value.setUniform("cheap_normals", expNormals ? 1 : 0)
+	sandbox.value.setUniform("cheap_normals", expNormals)
 	heroLoading.value = false
 })
 function thunderLevel(code: any) {
