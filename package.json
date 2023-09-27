@@ -12,7 +12,7 @@
     "@nuxt/devtools": "^0.8.4",
     "@nuxt/image": "1.0.0-rc.1",
     "@nuxt/ui": "^2.8.1",
-    "nuxt": "^3.7.3",
+    "nuxt": "^3.7.4",
     "resolve-lygia": "^1.0.4"
   },
   "dependencies": {

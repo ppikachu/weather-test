@@ -4,7 +4,7 @@ precision highp float;
 #endif
 
 // glslviewer commands:
-// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e is_day,1 -e precip_mm,1 -e hrs,12 -e debug,on -e textures,off -l -x 10 -y 80
+// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e is_day,1 -e precip_mm,1 -e temp_c,26 -e hrs,12 -e debug,on -e textures,off -l -x 10 -y 80 -w 256 -h 256
 // record,demo.mp4,3,10
 
 // https://www.shadertoy.com/view/tlSBDw
@@ -20,7 +20,6 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform sampler2D u_tex0;
-// uniform bool is_day;
 uniform bool cheap_normals;
 uniform vec2 u_tex0Resolution;
 uniform float u_time;
@@ -28,17 +27,19 @@ uniform float thunder;
 uniform float precip_mm;
 uniform float temp_c;
 uniform float hrs;
+uniform float humidity;
 
-#define DIGITS_SIZE vec2(.025, .03)
+// #define DIGITS_SIZE vec2(.05, .06)
 #include "lygia/draw/digits.glsl"
 #define BOXBLUR_2D
-#define BOXBLUR_ITERATIONS 4
+#define BOXBLUR_ITERATIONS 8
 #include "lygia/filter/boxBlur.glsl"
 // #define GAUSSIANBLUR_2D
 // #include "lygia/filter/gaussianBlur.glsl"
-#include "lygia/math/map.glsl"
+#include "lygia/math.glsl"
 #include "lygia/generative/cnoise.glsl"
 #include "lygia/color/palette.glsl"
+#include "lygia/color/palette/spectral.glsl"
 // #define cheap_normals
 
 // shadertoy emulation
@@ -127,7 +128,6 @@ vec2 Drops(vec2 uv, float t, float l0, float l1, float l2) {
 	
 	return vec2(c, max(m1.y*l0, m2.y*l1));
 }
-
 void main() {
 	vec3 col = vec3(0.);
 	vec2 st = gl_FragCoord.xy / u_resolution.xy;
@@ -135,11 +135,10 @@ void main() {
 	float t = u_time * .2;
 	
 	float rainAmount = precip_mm * .1;								// adjust the amount of rain
-	float fog = map(temp_c, 10., 25., 1., 0.2);				// adjust the fog. less temperatures increase the fog
-	float maxBlur = mix(.01, 1., fog);								// adjust the blur.
-	float minBlur = .1;
 	float story = 0.;
-
+	float blurmask = 0.; // new focus
+	float dMaxBlur = 0.;
+	float minBlur = .1;
 	float staticDrops = S(-.5, 1.5, rainAmount)*2.;
 	float layer1 = S(.25, .75, rainAmount);
 	float layer2 = S(.0, .5, rainAmount);
@@ -157,7 +156,7 @@ void main() {
 		float cy = Drops(uv+e.yx, t, staticDrops, layer1, layer2).x;
 		normal = vec2(cx-c.x, cy-c.x);
 	}
-		
+	
 	//FIT TEXTURE
 	float scaleX = 1.0, scaleY = 1.0;
 	float frameAspect = u_resolution.x / u_resolution.y;
@@ -166,60 +165,65 @@ void main() {
 	else scaleY = textureFrameRatio;
 	vec2 v_texcoord_aspect = vec2(scaleX, scaleY) * (st - 0.5) + 0.5;
 
-	float colFade = sin(t*.2)*.5+.5+story;
-	// col *= mix(vec3(1.), vec3(.8, .9, 1.3), colFade);		// subtle color shift
-	float fade = S(0., 10., u_time);															// fade in at the start
-
-	float blurmask = 0.; // new focus
-	float lightning = 0.;
+	float colFade = parabola(t*.2, 1.5) * .5 + .5 + story;
+	float fade = S(0., 10., u_time);						// fade in at the start
+	
 	// raining!
 	if (precip_mm > 0.0) {
-		blurmask = mix(maxBlur-c.y * .6, minBlur, S(.2, .5, c.x)); // new focus
-		float kernel_size = max(1.0, blurmask * 4.0);
-
-		// col = vec3(normal.x,normal.y,0.);		// debug normals
-		// col = vec3(c.x, c.y, .0);						// debug c
-		// col = vec3(maxBlur - c.y, .0, .0);		// debug c
-		// col = blurmask;											// debug focus
-		
-		// col = texture2D(u_tex0, v_texcoord_aspect+normal).rgb;
-		col = boxBlur(u_tex0, v_texcoord_aspect+normal, vec2(blurmask * .002), int(kernel_size)).rgb;
+		float fog = humidity * .01;								// adjust the fog. increase fog by humidity
+		float maxBlur = smoothstep(.0, 1., fog);	// adjust the blur.
+		dMaxBlur = maxBlur;
+		float lightning = 0.;
+		blurmask = mix(maxBlur-c.y, minBlur, S(.1, .8, c.x)); // new focus
+		float kernel_size = max(1.0, blurmask * 3.);
+		col = boxBlur(
+			u_tex0,
+			v_texcoord_aspect+normal,
+			vec2(blurmask * .005)
+			// ,int(kernel_size)
+		).rgb;
+		// col = vec3(normal.x,normal.y,0.);			// debug normals
+		// col = vec3(c.x, c.y, .0);							// debug c
+		// col = vec3(maxBlur - c.y);							// debug c
+		// col = vec3(minBlur);							// debug c
+		// col = vec3(blurmask);									// debug focus
+		// col = vec3(S(.1, .9, c.x));											// debug blurmask
+		// col = vec3(heat);											// debug heat
+		// col = vec3(blurmask * 100.);						// debug blurmask
 		// col = gaussianBlur(u_tex0, v_texcoord_aspect+normal, vec2(blurmask * .002), int(kernel_size)).rgb;
 
 		t = (u_time+3.)*.5;																						// make time sync with first lightning
 		lightning = sin(t*sin(t*10.));																// lighting flicker
 		lightning *= pow(max(0., sin(t+sin(t))), 10.);								// lightning flash
-		col *= 1.+lightning*fade*mix(1., .1, story*story)*thunder;		// composite lightning
+		col *= 1. + lightning*fade*mix(1., .1, story*story)*thunder;	// composite lightning
 	}
-
 	// not raining!
 	else {
-		float heat = cnoise(vec2(v_texcoord_aspect.x * 16., v_texcoord_aspect.y * 3. - u_time*2.))*.5+.5;
-		blurmask = heat*(1. - st.y) * temp_c * .0002;
+		float heat = cnoise(vec2(v_texcoord_aspect.x * 4., v_texcoord_aspect.y * 3. - u_time*2.))*.5+.5;
+		float fadeheat = .0002;
+		blurmask = heat * (1. - st.y) * temp_c * fadeheat;
+		col = boxBlur(u_tex0, v_texcoord_aspect + blurmask, vec2(blurmask)).rgb;
 
-		col = boxBlur(u_tex0, v_texcoord_aspect+blurmask, vec2(blurmask)).rgb;
-
-		// col = vec3(blurmask);						// debug blurmask
-		// col = vec3(-d3, heat, 0.);			// debug heat
-		// col = vec3(-mask, blurmask, 0.);	// debug blurmask
+		float heatloop = map(temp_c, 10., 40., -.2, .6) * (sin(t * sin(t*.1))*.1 + .8);
+		col.r += st.y * heatloop;						// heat
 	}
-	float heatloop = map(temp_c, 10., 40., -.2, .6) * (sin(t*2.*sin(t*10.))*.2+.7);
-	vec3 contrastA = vec3(.6);
-	vec3 contrastB = vec3(-.6);
-	vec3 colorshift = vec3(1.0);
-	vec3 colorshiftB = vec3(0.0, 0.1, 0.2);
-	vec3 hrsspectrum = palette(hrs/24.,contrastA,contrastB,colorshift,colorshiftB);
-	// vec3 hrsspectrum = palette(sin(u_time)*.5+.5,contrastA,contrastB,colorshift,colorshiftB);
-	// vec3 hrsspectrum = palette(12.,contrastA,contrastB,colorshift,colorshiftB);
-	col *= hrsspectrum;
-	// col.r += st.y * heatloop;									// heat
-	col *= 1.-dot(st -= .5, st);			// vignette
-	col *= fade;																			// composite start and end fade
+	
+	// float daynightime = fract(u_time * .2);
+	float daynightime = map(hrs, 0., 24., 0., 1.);
+	float correctedcurve = parabola(daynightime, .6);
+	vec3 hrsspectrum = spectral((1. - correctedcurve) * .5 + .5, .4) + vec3(.0, .1, .5);
+
+	// these always on!
+	col *= vec3(hrsspectrum);						// day-night cycle
+	col *= 1.-dot(st -= .5, st);				// vignette
+	col *= fade;												// composite start and end fade
+	// til here!
 
 	// debug:
- 	vec2 debug_pos = vec2(-.1, -.1);
-	// col = palette(v_texcoord_aspect.x,contrastA,contrastB,colorshift,colorshiftB);
-	col += digits(v_texcoord_aspect + debug_pos, (hrsspectrum.x+hrsspectrum.y+hrsspectrum.z)/3.);
+ 	// vec2 debug_pos = vec2(-.5, -.2);
+	// col += digits(v_texcoord_aspect + debug_pos, daynightime * 24.);
+	// col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.1), dMaxBlur);
+	// col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.05), minBlur);
 
 	gl_FragColor = vec4(col, 1.);
 }

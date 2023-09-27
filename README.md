@@ -1,14 +1,14 @@
 # weather-test
 
-Fullscreen web app.
+Fullscreen weather web app.
 
-Lygia
-GLSLViewer
-Nuxt
-@nuxt/ui
-@nuxt/image
-@vueuse/nuxt
-@vite-pwa/nuxt
-@nuxtjs/device
+* [Lygia](https://github.com/patriciogonzalezvivo/lygia)
+* [GLSLViewer](https://github.com/patriciogonzalezvivo/glslViewer)
+* [Nuxt](https://nuxt.com/)
+* [@nuxt/ui](https://ui.nuxt.com/)
+* [@nuxt/image](https://image.nuxt.com/)
+* [@vueuse/nuxt](https://vueuse.org/)
+* [@vite-pwa/nuxt](https://github.com/vite-pwa/nuxt)
+* [@nuxtjs/device](https://github.com/nuxt-modules/device)
 
 Fan of Nuxt? Maybe...

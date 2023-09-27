@@ -8,4 +8,5 @@
 		"2": "https://rawgit.com/actarian/plausible-brdf-shader/master/textures/noise/cloud-2.jpg",        
 	},
 	"webgl-glsl-editor.diagnostics": false,
+	"codeium.enableSearch": true,
 }

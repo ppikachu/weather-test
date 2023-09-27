@@ -19,7 +19,7 @@ interface Props {
 }
 
 const props: Props = defineProps({
-	texture: { type: String, default: '/images/TimeToForest_3.png' },
+	texture: { type: String, default: '/images/a-forest.jpg' },
 	test: { type: Boolean, default: false },
 })
 
@@ -113,7 +113,6 @@ watch([canvaswidth, canvasheight, apidata.value], () => {
 })
 
 watch([hrs, expNormals], () => {
-	// updateConditionData()
 	sandbox.value.setUniform("hrs", hrs.value)
 	sandbox.value.setUniform("cheap_normals", expNormals)
 })
@@ -166,13 +165,13 @@ function formatDateFromHour(hour: number) {
 function updateUniforms() {
 	if (sandbox.value && apidata.value) {
 		const { current } = apidata.value
-		const { is_day, temp_c, precip_mm, condition } = current
-		// set canvas resolution
+		const { is_day, temp_c, humidity, precip_mm, condition } = current
 		sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) // canvas resolution
 		sandbox.value.setUniform("is_day", is_day)
 		sandbox.value.setUniform("thunder", thunderLevel(condition.code))
 		sandbox.value.setUniform("temp_c", temp_c)
 		sandbox.value.setUniform("precip_mm", precip_mm)
+		sandbox.value.setUniform("humidity", humidity)
 	}
 }
 function updateConditionData() {
@@ -187,21 +186,20 @@ function updateConditionData() {
 
 <template>
 	<div id="divPortada" data-anchor="portada" class="relative h-screen">
-		<div ref="tweakpane" class="absolute"></div>
-		<UButton icon="i-mdi-cog" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
+		<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
 		<UModal v-model="isOpen" :overlay="false" class="text-sm" :ui="{container: 'items-start'}">
 			<div v-if="apidata" class="p-4 space-y-4">
 				<UAlert v-if="location.hostname === 'localhost'" title="" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft">
 					<template #title>
-						<div class="flex flex-col">
+						<div class="flex flex-col text-xs">
 							Debug
 						</div>
 					</template>
 					<template #description>
-						<div class="flex flex-col">
+						<div class="flex flex-col text-xs">
 							<span>Hora: {{ hrs }}</span>
-							<span>Date: {{ apidata?.location ? apidata.location.localtime : '2023-09-07 12:00' }}</span>
-							<!-- <span>route: {{ location }}</span> -->
+							<span>Date: {{ apidata.location.localtime }}</span>
+							<span>Humidity: {{ apidata.current.humidity }}</span>
 						</div>
 					</template>
 				</UAlert>
@@ -216,6 +214,10 @@ function updateConditionData() {
 				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
 					<span class="md:w-32 shrink-0">Precipitation:</span>
 					<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" :step="0.1" />
+				</div>
+				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
+					<span class="md:w-32 shrink-0">Humidity:</span>
+					<URange v-model="apidata.current.humidity" size="sm" :min="0" :max="100" :step="0.1" />
 				</div>
 				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
 					<span class="md:w-32 shrink-0">Time:</span>
@@ -252,7 +254,7 @@ function updateConditionData() {
 		</div>
 	</div>
 
-	<div class="absolute bottom-4 right-4 text-xs" >
+	<div class="absolute bottom-2 w-full text-center md:text-right text-xs px-2" >
 		Powered by <a href="https://www.weatherapi.com/" title="Free Weather API">WeatherAPI.com</a>
 	</div>
 </template>
