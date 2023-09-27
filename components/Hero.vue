@@ -50,7 +50,6 @@ const heroLoading = ref(true)
 const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
 const location = useBrowserLocation()
 const { isMobile } = useDevice()
-const expNormals = ref(isMobile ? 0 : 1)
 const thunderLevels = [
 	{code: 1000, thlevel: 0.00, condition: "Clear", icon: "113"},
 	{code: 1003, thlevel: 0.00, condition: "Partly cloudy", icon: "116"},
@@ -105,6 +104,7 @@ const thunderLevels = [
 // TODO: size?, format?, something or fix this!
 const $img = useImage()
 const photo = $img(props.texture, { format: 'webp' })
+const cheapNormals = ref(isMobile ? true : false)
 
 // Listeners / set uniforms
 const { width: canvaswidth, height: canvasheight } = useWindowSize()
@@ -112,10 +112,11 @@ watch([canvaswidth, canvasheight, apidata.value], () => {
 	updateUniforms()
 })
 
-watch([hrs, expNormals], () => {
+watch([hrs, cheapNormals], () => {
 	sandbox.value.setUniform("hrs", hrs.value)
-	sandbox.value.setUniform("cheap_normals", expNormals)
+	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
 })
+
 
 onMounted(() => {
 	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
@@ -134,7 +135,7 @@ onMounted(() => {
 	// weather
 	updateUniforms()
 	sandbox.value.setUniform("hrs", hrs.value)
-	sandbox.value.setUniform("cheap_normals", expNormals)
+	sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
 	heroLoading.value = false
 })
 function thunderLevel(code: any) {
@@ -142,25 +143,10 @@ function thunderLevel(code: any) {
 	const thunderLevel = thunderLevels.find((item) => item.code === codeNumber)
 	return thunderLevel?.thlevel
 }
-function setCondition(code: any) {
-	const codeNumber = typeof code === "number"? code : parseInt(code)
-	const matchedCondition = thunderLevels.find((item) => item.code === codeNumber)
-	return matchedCondition?.condition as string
-}
-function setIcon(code: any) {
-	const codeNumber = typeof code === "number"? code : parseInt(code)
-	const matchedCondition = thunderLevels.find((item) => item.code === codeNumber)
-	const dayOrNight = apidata.value?.current.is_day === 1? "day/" : "night/"
-	return "/images/weather/64x64/" + dayOrNight + matchedCondition?.icon + ".png"
-}
 function getHourofDay(dateString: string) {
 	const dateObject = new Date(dateString)
 	const hour = dateObject.getHours()
 	return hour
-}
-function formatDateFromHour(hour: number) {
-	const dateObject = new Date(apidata.value?.location.localtime as string)
-	dateObject.setHours(hour)
 }
 function updateUniforms() {
 	if (sandbox.value && apidata.value) {
@@ -172,16 +158,12 @@ function updateUniforms() {
 		sandbox.value.setUniform("temp_c", temp_c)
 		sandbox.value.setUniform("precip_mm", precip_mm)
 		sandbox.value.setUniform("humidity", humidity)
+		sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
 	}
 }
-function updateConditionData() {
-	if (apidata.value) {
-		const { current } = apidata.value
-		const { condition } = current
-		apidata.value.current.condition.text = setCondition(condition.code)
-		apidata.value.current.condition.icon = setIcon(condition.code)
-	}
-}
+const computedCheapNormals = computed(() => {
+	return isMobile ? 1 : 0
+})
 </script>
 
 <template>
@@ -189,11 +171,9 @@ function updateConditionData() {
 		<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
 		<UModal v-model="isOpen" :overlay="false" class="text-sm" :ui="{container: 'items-start'}">
 			<div v-if="apidata" class="p-4 space-y-4">
-				<UAlert v-if="location.hostname === 'localhost'" title="" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft">
+				<UAlert v-if="location.hostname === 'localhost'" title="debuf" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft" :ui="{padding: 'p-2'}">
 					<template #title>
-						<div class="flex flex-col text-xs">
 							Debug
-						</div>
 					</template>
 					<template #description>
 						<div class="flex flex-col text-xs">
@@ -204,29 +184,31 @@ function updateConditionData() {
 					</template>
 				</UAlert>
 				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
-					<span class="md:w-32 shrink-0">Rain condition:</span>
+					<span class="md:w-32 shrink-0 mb-1 md:mb-2">Rain condition:</span>
 					<USelect v-model="apidata.current.condition.code" :options="thunderLevels" option-attribute="condition" value-attribute="code" size="sm" class="w-full" />
 				</div>
 				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
-					<span class="md:w-32 shrink-0">Temp:</span>
+					<span class="md:w-32 shrink-0 mb-1 md:mb-2">Temp:</span>
 					<URange v-model="apidata.current.temp_c" size="sm" :min="0" :max="40" />
 				</div>
 				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
-					<span class="md:w-32 shrink-0">Precipitation:</span>
+					<span class="md:w-32 shrink-0 mb-1 md:mb-2">Precipitation:</span>
 					<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" :step="0.1" />
 				</div>
 				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
-					<span class="md:w-32 shrink-0">Humidity:</span>
+					<span class="md:w-32 shrink-0 mb-1 md:mb-2">Humidity:</span>
 					<URange v-model="apidata.current.humidity" size="sm" :min="0" :max="100" :step="0.1" />
 				</div>
 				<div class="flex flex-col md:flex-row md:items-center md:space-x-2">
-					<span class="md:w-32 shrink-0">Time:</span>
+					<span class="md:w-32 shrink-0 mb-1 md:mb-2">Time:</span>
 					<URange v-model="hrs" size="sm" :min="0" :max="24" :step="0.1" />
 				</div>
-				<UCheckbox v-model="expNormals" name="normals" :label="'X normals* (' + expNormals + ')'" />
+				<UCheckbox v-model="cheapNormals" name="normals" :label="'Cheap normals* (' + cheapNormals + ')'" />
 			</div>
-			<span class="text-xs mb-4 text-center text-gray-500">click outside to dismiss or press <UKbd value="Esc" />
-			</span>
+			<div class="text-center text-xs mb-2 text-gray-500 space-y-2">
+				<p>click outside to dismiss or press <UKbd value="Esc" /></p>
+				<p>Powered by <a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a></p>
+			</div>
 		</UModal>
 
 		<canvas ref="heroCanvas" class="sticky" />
@@ -241,10 +223,10 @@ function updateConditionData() {
 		</Transition>
 	</div>
 
-	<div class="absolute flex items-end justify-center inset-8">
-		<div v-if="apidata" class="bg-gradient-to-t from-gray-950 to-gray-900 flex items-center space-x-4 px-4 py-1 rounded-full">
-			<img :src="apidata.current.condition.icon" class="w-8 -mr-3 -ml-2" />
-			<h1 class="">{{ apidata.current.condition.text }}</h1>
+	<div class="absolute flex items-end justify-center inset-4 whitespace-nowrap text-sm">
+		<div v-if="apidata" class="bg-gradient-to-t from-gray-950 to-gray-900 flex items-center space-x-3 px-4 py-1 rounded-full">
+			<img :src="apidata.current.condition.icon" class="w-8 -mr-2 -ml-2" />
+			<span class="">{{ apidata.current.condition.text }}</span>
 			<span class="flex items-center">
 				<UIcon name="i-mdi-thermometer" />{{ apidata.current.temp_c }} °C
 			</span>
@@ -254,9 +236,6 @@ function updateConditionData() {
 		</div>
 	</div>
 
-	<div class="absolute bottom-2 w-full text-center md:text-right text-xs px-2" >
-		Powered by <a href="https://www.weatherapi.com/" title="Free Weather API">WeatherAPI.com</a>
-	</div>
 </template>
 
 <style scoped>

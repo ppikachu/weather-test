@@ -31,7 +31,7 @@ uniform float humidity;
 
 // #define DIGITS_SIZE vec2(.05, .06)
 #define BOXBLUR_2D
-#define BOXBLUR_ITERATIONS 8
+#define BOXBLUR_ITERATIONS 4
 // #define cheap_normals
 #include "lygia/filter/boxBlur.glsl"
 // #define GAUSSIANBLUR_2D
@@ -129,6 +129,7 @@ vec2 Drops(vec2 uv, float t, float l0, float l1, float l2) {
 	return vec2(c, max(m1.y*l0, m2.y*l1));
 }
 void main() {
+	// bool cheap_normals = true;
 	vec3 col = vec3(0.);
 	vec2 st = gl_FragCoord.xy / u_resolution.xy;
 	vec2 uv = (gl_FragCoord.xy -.5 * u_resolution.xy) / u_resolution.y;
@@ -167,14 +168,15 @@ void main() {
 
 	float colFade = parabola(t*.2, 1.5) * .5 + .5 + story;
 	float fade = S(0., 10., u_time);						// fade in at the start
+	float fadeheat = .0001;
 	
 	// raining!
 	if (precip_mm > 0.0) {
-		float fog = humidity * .01;								// adjust the fog. increase fog by humidity
-		float maxBlur = smoothstep(.0, 1., fog);	// adjust the blur.
+		float fog = humidity * (map(temp_c, 0., 40., 1., 0.)) * .015;						// adjust the fog. increase fog by humidity
+		float maxBlur = smoothstep(.0, 1., fog);								// adjust the blur.
 		dMaxBlur = maxBlur;
 		float lightning = 0.;
-		blurmask = mix(maxBlur-c.y, minBlur, S(.1, .8, c.x)); // new focus
+		blurmask = mix(maxBlur-c.y, minBlur, S(.1, .8, c.x));		// new focus
 		float kernel_size = max(1.0, blurmask * 3.);
 		col = boxBlur(
 			u_tex0,
@@ -200,7 +202,6 @@ void main() {
 	// not raining!
 	else {
 		float heat = cnoise(vec2(v_texcoord_aspect.x * 4., v_texcoord_aspect.y * 3. - u_time*2.))*.5+.5;
-		float fadeheat = .0002;
 		blurmask = heat * (1. - st.y) * temp_c * fadeheat;
 		col = boxBlur(u_tex0, v_texcoord_aspect + blurmask, vec2(blurmask)).rgb;
 
@@ -220,7 +221,10 @@ void main() {
 	// til here!
 
 	// debug:
- 	// vec2 debug_pos = vec2(-.5, -.2);
+ 	vec2 debug_pos = vec2(-.5, -.2);
+	if (cheap_normals) {
+		col += digits(v_texcoord_aspect + debug_pos, 1.);
+	}
 	// col += digits(v_texcoord_aspect + debug_pos, daynightime * 24.);
 	// col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.1), dMaxBlur);
 	// col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.05), minBlur);
