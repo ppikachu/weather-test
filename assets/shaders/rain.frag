@@ -30,9 +30,9 @@ uniform float hrs;
 uniform float humidity;
 
 // #define DIGITS_SIZE vec2(.05, .06)
-#include "lygia/draw/digits.glsl"
 #define BOXBLUR_2D
 #define BOXBLUR_ITERATIONS 8
+// #define cheap_normals
 #include "lygia/filter/boxBlur.glsl"
 // #define GAUSSIANBLUR_2D
 // #include "lygia/filter/gaussianBlur.glsl"
@@ -40,7 +40,7 @@ uniform float humidity;
 #include "lygia/generative/cnoise.glsl"
 #include "lygia/color/palette.glsl"
 #include "lygia/color/palette/spectral.glsl"
-// #define cheap_normals
+#include "lygia/draw/digits.glsl"
 
 // shadertoy emulation
 #define S(a, b, t) smoothstep(a, b, t)
