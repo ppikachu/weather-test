@@ -129,15 +129,15 @@ vec2 Drops(vec2 uv, float t, float l0, float l1, float l2) {
 	return vec2(c, max(m1.y*l0, m2.y*l1));
 }
 void main() {
-	// bool cheap_normals = true;
 	vec3 col = vec3(0.);
 	vec2 st = gl_FragCoord.xy / u_resolution.xy;
 	vec2 uv = (gl_FragCoord.xy -.5 * u_resolution.xy) / u_resolution.y;
 	float t = u_time * .2;
 	
-	float rainAmount = precip_mm * .1;								// adjust the amount of rain
+	float fade = S(0., 10., u_time);						// fade in at the start
 	float story = 0.;
-	float blurmask = 0.; // new focus
+	float blurmask = 0.; 												// new focus
+	float rainAmount = precip_mm * .1;					// adjust the amount of rain
 	float dMaxBlur = 0.;
 	float minBlur = .1;
 	float staticDrops = S(-.5, 1.5, rainAmount)*2.;
@@ -165,10 +165,6 @@ void main() {
 	if (textureFrameRatio>1.0) scaleX = 1.0 / textureFrameRatio;
 	else scaleY = textureFrameRatio;
 	vec2 v_texcoord_aspect = vec2(scaleX, scaleY) * (st - 0.5) + 0.5;
-
-	float colFade = parabola(t*.2, 1.5) * .5 + .5 + story;
-	float fade = S(0., 10., u_time);						// fade in at the start
-	float fadeheat = .0001;
 	
 	// raining!
 	if (precip_mm > 0.0) {
@@ -201,6 +197,7 @@ void main() {
 	}
 	// not raining!
 	else {
+		float fadeheat = .0001;
 		float heat = cnoise(vec2(v_texcoord_aspect.x * 4., v_texcoord_aspect.y * 3. - u_time*2.))*.5+.5;
 		blurmask = heat * (1. - st.y) * temp_c * fadeheat;
 		col = boxBlur(u_tex0, v_texcoord_aspect + blurmask, vec2(blurmask)).rgb;
@@ -221,10 +218,10 @@ void main() {
 	// til here!
 
 	// debug:
- 	vec2 debug_pos = vec2(-.5, -.2);
-	if (cheap_normals) {
-		col += digits(v_texcoord_aspect + debug_pos, 1.);
-	}
+ 	// vec2 debug_pos = vec2(-.5, -.2);
+	// if (cheap_normals) {
+	// 	col += digits(v_texcoord_aspect + debug_pos, 1.);
+	// }
 	// col += digits(v_texcoord_aspect + debug_pos, daynightime * 24.);
 	// col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.1), dMaxBlur);
 	// col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.05), minBlur);
