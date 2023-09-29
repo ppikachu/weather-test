@@ -1,10 +1,1 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="256" cy="256" r="224.5" fill="url(#paint0_linear_902_156)" stroke="white" stroke-width="33"/>
-<path d="M251.414 411L297.258 397.252L214.741 369.741L329.347 346.823L182.652 310.15C343.095 296.401 402.687 278.068 402.687 255.143C402.687 48.8641 109.313 53.4492 109.313 245.973" stroke="white" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
-<defs>
-<linearGradient id="paint0_linear_902_156" x1="256" y1="15" x2="256" y2="497" gradientUnits="userSpaceOnUse">
-<stop stop-color="#FF7A00"/>
-<stop offset="1" stop-color="#893F00"/>
-</linearGradient>
-</defs>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" fill="none" viewBox="0 0 512 512"><circle cx="256" cy="256" r="224.5" fill="url(#paint0_linear_902_156)" stroke="#fff" stroke-width="33"/><path stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="34" d="M251.414 411L297.258 397.252L214.741 369.741L329.347 346.823L182.652 310.15C343.095 296.401 402.687 278.068 402.687 255.143C402.687 48.8641 109.313 53.4492 109.313 245.973"/><defs><linearGradient id="paint0_linear_902_156" x1="256" x2="256" y1="15" y2="497" gradientUnits="userSpaceOnUse"><stop stop-color="#FF7A00"/><stop offset="1" stop-color="#893F00"/></linearGradient></defs></svg>
