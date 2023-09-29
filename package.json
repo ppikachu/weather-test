@@ -7,12 +7,14 @@
     "dev-o": "nuxt dev -o",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "generate-pwa-assets": "pwa-assets-generator --preset minimal public/logo.svg"
   },
   "devDependencies": {
     "@nuxt/devtools": "^0.8.4",
     "@nuxt/image": "1.0.0-rc.1",
     "@nuxt/ui": "^2.8.1",
+    "@vite-pwa/assets-generator": "^0.0.10",
     "nuxt": "^3.7.4",
     "resolve-lygia": "^1.0.4"
   },

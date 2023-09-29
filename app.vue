@@ -1,14 +1,14 @@
 <script setup>
 useSeoMeta({
-	title: 'weather glsl',
-	description: 'animated weather',
-	ogTitle: 'weather glsl',
-	ogDescription: 'animated weather',
-	ogImage: 'images',
+	title: 'Weather App',
+	description: 'Animated weather effects',
+	ogTitle: 'Weather App',
+	ogDescription: 'Animated weather effects',
+	ogImage: '/images/a-forest.jpg',
 	ogUrl: 'https://weather-test-livid.vercel.app',
-	twitterTitle: 'weather glsl',
-	twitterDescription: 'animated weather',
-	twitterImage: '/images/ordinaryheart_i05.jpg',
+	twitterTitle: 'Weather App',
+	twitterDescription: 'Animated weather effects',
+	twitterImage: '/pwa-512x512.png',
 	twitterCard: 'summary'
 })
 
@@ -20,12 +20,19 @@ useHead({
 		{
 			rel: 'icon',
 			type: 'image/png',
-			href: '/favicon.png'
+			href: '/pwa-64x64.png'
 		}
 	]
 })
 </script>
 
 <template>
-	<Hero />
+	<!-- <Hero /> -->
+	<div>
+		<VitePwaManifest />
+		<NuxtLoadingIndicator />
+		<NuxtLayout>
+			<NuxtPage />
+		</NuxtLayout>
+	</div>
 </template>

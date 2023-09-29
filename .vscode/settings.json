@@ -7,6 +7,9 @@
 		"1": "https://rawgit.com/actarian/plausible-brdf-shader/master/textures/noise/cloud-1.png",
 		"2": "https://rawgit.com/actarian/plausible-brdf-shader/master/textures/noise/cloud-2.jpg",        
 	},
+	"glsl-canvas.uniforms": {
+		"hrs": 12
+	},
 	"webgl-glsl-editor.diagnostics": false,
 	"codeium.enableSearch": true,
 }
