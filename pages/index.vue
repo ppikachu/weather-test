@@ -44,6 +44,7 @@ if (props.test) {
 
 // sandbox
 const isOpen = ref(false) // modal
+const isDay = [0,1]
 const shader = ref()
 const heroCanvas = ref()
 const sandbox = ref()
@@ -182,55 +183,65 @@ const setIcon = computed(() => {
 
 <template>
 	<VitePwaManifest />
-	<div id="divPortada" data-anchor="portada" class="relative h-screen">
+	<div id="divPortada" class="relative hero-area">
 		<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
-		<UModal v-model="isOpen" :overlay="false" class="text-sm" :ui="{ container: 'items-start' }">
-			<div v-if="apidata" class="p-4 space-y-4">
-				<!-- <UAlert v-if="location.hostname === 'localhost'" title="debuf" icon="i-mdi-alert-circle-outline" color="yellow"
-					variant="soft" :ui="{ padding: 'p-2' }">
-					<template #title>
-						Debug
-					</template>
-					<template #description>
-						<div class="flex flex-col text-xs">
-							<span>Hora: {{ hrs }}</span>
-							<span>Date: {{ apidata.location.localtime }}</span>
-							<span>Humidity: {{ apidata.current.humidity }}</span>
-						</div>
-					</template>
-				</UAlert> -->
-				<UFormGroup label="Condition">
-					<USelect
-						v-model="apidata.current.condition.code"
-						:options="thunderLevels"
-						value-attribute="code"
-						option-attribute="text"
-						size="sm"
-					/>
-				</UFormGroup>
-				<UFormGroup label="Temp">
-					<URange v-model="apidata.current.temp_c" size="sm" :min="0" :max="40" />
-				</UFormGroup>
-				<UFormGroup label="Precip">
-					<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" :step="0.1" />
-				</UFormGroup>
-				<UFormGroup label="Humidity">
-					<URange v-model="apidata.current.humidity" size="sm" :min="0" :max="100" :step="0.1" />
-				</UFormGroup>
-				<UFormGroup label="Time">
-					<URange v-model="hrs" size="sm" :min="0" :max="24" :step="0.1" />
-				</UFormGroup>
-				<UCheckbox v-model="cheapNormals" label="Cheap normals" />
-				<UCheckbox v-model="apidata.current.is_day" label="Day/night" />
-			</div>
-			<div class="text-center text-xs mb-2 text-gray-500 space-y-2">
-				<p>
-					click outside to dismiss or press <UKbd value="Esc" /> / Powered by <a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a>
-				</p>
-			</div>
+		<canvas ref="heroCanvas" class="sticky" />
+		<UModal v-model="isOpen" :overlay="false">
+			<UCard v-if="apidata">
+				<div class="space-y-4 text-sm">
+					<!-- <UAlert v-if="location.hostname === 'localhost'" title="debuf" icon="i-mdi-alert-circle-outline" color="yellow"
+						variant="soft" :ui="{ padding: 'p-2' }">
+						<template #title>
+							Debug
+						</template>
+						<template #description>
+							<div class="flex flex-col text-xs">
+								<span>Hora: {{ hrs }}</span>
+								<span>Date: {{ apidata.location.localtime }}</span>
+								<span>Humidity: {{ apidata.current.humidity }}</span>
+							</div>
+						</template>
+					</UAlert> -->
+					<UFormGroup label="Condition">
+						<USelect
+							v-model="apidata.current.condition.code"
+							:options="thunderLevels"
+							value-attribute="code"
+							option-attribute="text"
+							size="sm"
+						/>
+					</UFormGroup>
+					<UFormGroup label="Temp">
+						<URange v-model="apidata.current.temp_c" size="sm" :min="0" :max="40" />
+					</UFormGroup>
+					<UFormGroup label="Precip">
+						<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" />
+					</UFormGroup>
+					<UFormGroup label="Humidity">
+						<URange v-model="apidata.current.humidity" size="sm" :min="0" :max="100" />
+					</UFormGroup>
+					<UFormGroup label="Time">
+						<URange v-model="hrs" size="sm" :min="0" :max="24" />
+					</UFormGroup>
+					<div class="flex space-x-8 justify-around">
+						<UFormGroup label="Cheap normals">
+							<UToggle v-model="cheapNormals" />
+						</UFormGroup>
+						<UFormGroup label="Day/night">
+							<UToggle v-model="apidata.current.is_day" />
+						</UFormGroup>
+					</div>
+				</div>
+				<template #footer>
+					<div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 items-center justify-center text-xs text-gray-500">
+						<span>click outside to dismiss or press <UKbd value="Esc" /></span>
+						<span class="hidden sm:inline">/</span>
+						<span>Powered by <a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a></span>
+					</div>
+				</template>
+			</UCard>
 		</UModal>
 
-		<canvas ref="heroCanvas" class="sticky" />
 
 		<Transition>
 			<div v-show="heroLoading" class="absolute top-0 w-full h-screen flex items-center justify-center bg-black z-40">
@@ -243,12 +254,12 @@ const setIcon = computed(() => {
 	</div>
 	
 	<!-- Weather Pill -->
-	<div class="absolute flex items-end justify-center inset-8">
-		<UBadge :color="apidata?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="space-x-3 whitespace-nowrap text-base" :ui="{ rounded: 'rounded-full' }">
-			<UTooltip :text="setCondition(apidata?.current.condition.code)">
+	<div class="absolute bottom-20 flex items-end justify-center w-full">
+		<UBadge :color="apidata?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="whitespace-nowrap text-base min-w-max" :ui="{ rounded: 'rounded-full' }">
+			<UTooltip :text="setCondition(apidata?.current.condition.code)" class="flex-shrink-0">
 				<img :src="setIcon" />
 			</UTooltip>
-			<span class="flex items-center"><UIcon name="i-mdi-thermometer" />{{ apidata?.current.temp_c }} °C</span>
+			<span class="flex items-center pr-4 -ml-2"><UIcon name="i-mdi-thermometer" />{{ apidata?.current.temp_c }} °C</span>
 			<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ apidata?.current.precip_mm }} mm</span>
 		</UBadge>
 	</div>
@@ -257,6 +268,11 @@ const setIcon = computed(() => {
 </template>
 
 <style scoped>
+.hero-area {
+	height: 100dvh;
+	width: 100%;
+}
+
 .v-enter-active,
 .v-leave-active {
 	transition: opacity 0.5s ease;
