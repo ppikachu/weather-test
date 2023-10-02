@@ -7,6 +7,7 @@ export default defineNuxtConfig({
 		"@vueuse/nuxt",
 		"@vite-pwa/nuxt",
 		"@nuxtjs/device",
+		"@pinia/nuxt",
 	],
 	runtimeConfig: {
 		public: {
@@ -55,8 +56,8 @@ export default defineNuxtConfig({
 			],
 		},
 		workbox: {
-			navigateFallback: '/',
-			globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+			navigateFallback: "/",
+			globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
 		},
 		client: {
 			installPrompt: true,
@@ -65,7 +66,7 @@ export default defineNuxtConfig({
 			// periodicSyncForUpdates: 20,
 		},
 		devOptions: {
-			enabled: true,
+			enabled: false,
 			// suppressWarnings: true,
 			// type: 'module',
 		},

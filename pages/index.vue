@@ -25,8 +25,28 @@ const props: Props = {
 
 // api weather
 const config = useRuntimeConfig()
-// const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q=-34.58,-58.39&lang=es'
-const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q=-34.58,-58.39'
+
+const { coords, error, resume, pause } = useGeolocation()
+onBeforeUnmount(() => {
+	pause()
+})
+function locateUser() {
+	if (!error.value) {
+		resume()
+		setTimeout(() => {
+			console.log("coordinates", coords.value)
+			// do some logic to check if we got actual values not null of infinity
+			// useMapBoxReverseGeocoder()
+		}, 5000)
+	} else {
+		console.log("error", error.value.message)
+	}
+}
+
+locateUser()
+
+const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q=-34.58,-58.39&lang=es'
+// const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q='+latitude+','+latitude
 const options: object = {
 	method: 'GET',
 	headers: {
@@ -44,7 +64,7 @@ if (props.test) {
 
 // sandbox
 const isOpen = ref(false) // modal
-const isDay = [0,1]
+const isDay = computed(() => apidata.value?.current.is_day === 1 ? true : false) // [0,1]
 const shader = ref()
 const heroCanvas = ref()
 const sandbox = ref()
@@ -52,6 +72,7 @@ const heroLoading = ref(true)
 const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
 const location = useBrowserLocation()
 const { isMobile } = useDevice()
+const fps = useFps()
 const thunderLevels = [
 	{ code: 1000, thlevel: 0.00, text: "Clear", icon: "113" },
 	{ code: 1003, thlevel: 0.00, text: "Partly cloudy", icon: "116" },
@@ -189,19 +210,18 @@ const setIcon = computed(() => {
 		<UModal v-model="isOpen" :overlay="false">
 			<UCard v-if="apidata">
 				<div class="space-y-4 text-sm">
-					<!-- <UAlert v-if="location.hostname === 'localhost'" title="debuf" icon="i-mdi-alert-circle-outline" color="yellow"
+					<UAlert v-if="location.hostname === 'localhost'" title="debuf" icon="i-mdi-alert-circle-outline" color="yellow"
 						variant="soft" :ui="{ padding: 'p-2' }">
 						<template #title>
 							Debug
 						</template>
 						<template #description>
 							<div class="flex flex-col text-xs">
-								<span>Hora: {{ hrs }}</span>
-								<span>Date: {{ apidata.location.localtime }}</span>
-								<span>Humidity: {{ apidata.current.humidity }}</span>
+								<span>Location: {{ coords.latitude }}, {{ coords.longitude }}</span>
+								<span>FPS: {{ fps }}</span>
 							</div>
 						</template>
-					</UAlert> -->
+					</UAlert>
 					<UFormGroup label="Condition">
 						<USelect
 							v-model="apidata.current.condition.code"
@@ -211,16 +231,16 @@ const setIcon = computed(() => {
 							size="sm"
 						/>
 					</UFormGroup>
-					<UFormGroup label="Temp">
+					<UFormGroup :label="'Temperature: ' + apidata.current.temp_c + '°C'">
 						<URange v-model="apidata.current.temp_c" size="sm" :min="0" :max="40" />
 					</UFormGroup>
-					<UFormGroup label="Precip">
+					<UFormGroup :label="'Precipitation: ' + apidata.current.precip_mm + ' mm'">
 						<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" />
 					</UFormGroup>
-					<UFormGroup label="Humidity">
+					<UFormGroup :label="'Humidity: ' + apidata.current.humidity + '%'">
 						<URange v-model="apidata.current.humidity" size="sm" :min="0" :max="100" />
 					</UFormGroup>
-					<UFormGroup label="Time">
+					<UFormGroup :label="'Time: '+ hrs + ':00'">
 						<URange v-model="hrs" size="sm" :min="0" :max="24" />
 					</UFormGroup>
 					<div class="flex space-x-8 justify-around">
@@ -228,7 +248,7 @@ const setIcon = computed(() => {
 							<UToggle v-model="cheapNormals" />
 						</UFormGroup>
 						<UFormGroup label="Day/night">
-							<UToggle v-model="apidata.current.is_day" />
+							<UToggle v-model="isDay" />
 						</UFormGroup>
 					</div>
 				</div>

@@ -208,7 +208,7 @@ void main() {
 	
 	// float daynightime = fract(u_time * .2);
 	float daynightime = map(hrs, 0., 24., 0., 1.);
-	float correctedcurve = parabola(daynightime, .6);
+	float correctedcurve = parabola(daynightime, .7);
 	vec3 hrsspectrum = spectral((1. - correctedcurve) * .5 + .5, .4) + vec3(.0, .1, .5);
 
 	// these always on!
