@@ -13,7 +13,7 @@
   "devDependencies": {
     "@nuxt/devtools": "1.0.0-beta.0",
     "@nuxt/image": "1.0.0-rc.1",
-    "@nuxt/ui": "^2.8.1",
+    "@nuxt/ui": "^2.9.0",
     "@vite-pwa/assets-generator": "^0.0.10",
     "nuxt": "^3.7.4",
     "resolve-lygia": "^1.0.4"

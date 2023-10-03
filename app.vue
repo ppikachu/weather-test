@@ -39,14 +39,35 @@ useHead({
 		}
 	]
 })
+
+const { coords, error, resume, pause } = useGeolocation()
+const location = useBrowserLocation()
 </script>
 
 <template>
 	<div>
 		<VitePwaManifest />
 		<NuxtLoadingIndicator />
-		<NuxtLayout>
-			<NuxtPage />
-		</NuxtLayout>
+
+		<Hero
+			:latitude="coords.latitude !== Infinity ? coords.latitude : -34.58"
+			:longitude="coords.longitude !== Infinity ? coords.longitude : -58.4"
+		/>
+
+			<UAlert v-if="location.hostname === 'localhost'"
+				title="debug"
+				icon="i-mdi-alert-circle-outline"
+				color="yellow"
+				variant="soft"
+				:ui="{ padding: 'p-2', wrapper: 'absolute w-1/3 top-2 left-2' }"
+			>
+				<template #title>Debug</template>
+				<template #description>
+					<div class="flex flex-col text-xs">
+						<span>Location: {{ coords.latitude }}, {{ coords.longitude }}</span>
+					</div>
+				</template>
+			</UAlert>
+
 	</div>
 </template>

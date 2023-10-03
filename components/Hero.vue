@@ -2,6 +2,7 @@
 // @ts-ignore
 import { resolveLygia } from 'resolve-lygia'
 import rainFragment from '~/assets/shaders/rain.frag?raw'
+import fakeData from '~/assets/sample-data-rain.json'
 // import GlslCanvas from 'glslCanvas'
 
 //TODO: use package or minified js
@@ -12,66 +13,34 @@ useHead({
 	}]
 })
 
-/* Define props */
-interface Props {
-	texture: string
-	test: boolean
-}
-
-const props: Props = {
-	texture: '/images/a-forest.jpg',
-	test: false,
-}
-
-// api weather
 const config = useRuntimeConfig()
-
-const { coords, error, resume, pause } = useGeolocation()
-onBeforeUnmount(() => {
-	pause()
-})
-function locateUser() {
-	if (!error.value) {
-		resume()
-		setTimeout(() => {
-			console.log("coordinates", coords.value)
-			// do some logic to check if we got actual values not null of infinity
-			// useMapBoxReverseGeocoder()
-		}, 5000)
-	} else {
-		console.log("error", error.value.message)
-	}
-}
-
-locateUser()
-
-const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q=-34.58,-58.39&lang=es'
-// const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q='+latitude+','+latitude
-const options: object = {
-	method: 'GET',
-	headers: {
-		'X-RapidAPI-Key': config.public.RapidAPIKey,
-		'X-RapidAPI-Host': config.public.RapidAPIHost
-	},
-	lang: 'es'
-}
-const { data: apidata } = await useFetch<WeatherData>(url, options)
-// test weather check
-import fakeData from '~/assets/sample-data-rain.json'
-if (props.test) {
-	apidata.value = fakeData as WeatherData
-}
+const { isMobile } = useDevice()
+const location = useBrowserLocation()
+const { width: canvaswidth, height: canvasheight } = useWindowSize()
 
 // sandbox
+/* Define props */
+interface Props {
+	texture: string,
+	test: boolean,
+	latitude: number,
+	longitude: number,
+}
+
+const props: Props = defineProps({
+	texture: { type: String, default: '/images/TimeToForest_3.png' },
+	test: { type: Boolean, default: false },
+	latitude: { type: Number, default: -34.58 },
+	longitude: { type: Number, default: -58.39 }
+})
+
 const isOpen = ref(false) // modal
 const isDay = computed(() => apidata.value?.current.is_day === 1 ? true : false) // [0,1]
 const shader = ref()
+const cheapNormals = ref(isMobile ? true : false)
 const heroCanvas = ref()
 const sandbox = ref()
 const heroLoading = ref(true)
-const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
-const location = useBrowserLocation()
-const { isMobile } = useDevice()
 const fps = useFps()
 const thunderLevels = [
 	{ code: 1000, thlevel: 0.00, text: "Clear", icon: "113" },
@@ -123,45 +92,27 @@ const thunderLevels = [
 	{ code: 1279, thlevel: 0.25, text: "Patchy light snow with thunder", icon: "392" },
 	{ code: 1282, thlevel: 0.50, text: "Moderate or heavy snow with thunder", icon: "395" },
 ]
+// api weather
+const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q='+props.latitude+','+props.longitude
+const options: object = {
+	method: 'GET',
+	headers: {
+		'X-RapidAPI-Key': config.public.RapidAPIKey,
+		'X-RapidAPI-Host': config.public.RapidAPIHost
+	},
+	lang: 'es',
+}
+const { data: apidata, pending, error, refresh } = await useFetch<WeatherData>(url, options)
+const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
+
 
 //TODO: size?, format?, something or fix this!
 const $img = useImage()
 const photo = $img(props.texture, { format: 'webp' })
-const cheapNormals = ref(isMobile ? true : false)
-
-//Listeners / set uniforms
-const { width: canvaswidth, height: canvasheight } = useWindowSize()
-watch([canvaswidth, canvasheight, apidata.value], () => {
-	updateUniforms()
-})
-
-//TODO: Debug listeners (avoid on production)
-watch([hrs, cheapNormals], () => {
-	sandbox.value.setUniform("hrs", hrs.value)
-	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
-})
-//end debug listeners
-
-onMounted(() => {
-	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
-	const iheight: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientHeight : 10
-	// resolve-lygia package
-	shader.value = resolveLygia(rainFragment)
-	// @ts-ignore //this is a hack. glslCanvas is loaded in the head html
-	sandbox.value = new GlslCanvas(heroCanvas.value)
-	heroCanvas.value.style.width = "100%"
-	heroCanvas.value.style.height = "100%"
-	// Load resolved shader
-	sandbox.value.load(shader.value)
-	// Load a new texture and assign it to uniform sampler2D u_texture
-	sandbox.value.setUniform("u_tex0", photo)
-	sandbox.value.setUniform("u_tex0Resolution", iwidth / iheight)
-	// weather
-	updateUniforms()
-	sandbox.value.setUniform("hrs", hrs.value)
-	sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
-	heroLoading.value = false
-})
+// test weather check
+if (props.test) {
+	apidata.value = fakeData as WeatherData
+}
 function thunderLevel(code: any) {
 	const codeNumber = typeof code === "number" ? code : parseInt(code)
 	const thunderLevel = thunderLevels.find((item) => item.code === codeNumber)
@@ -200,6 +151,38 @@ const setIcon = computed(() => {
 	const dayOrNight = apidata.value?.current.is_day ? "day/" : "night/"
 	return "/images/weather/64x64/" + dayOrNight + matchedCondition?.icon + ".png"
 })
+
+onMounted(() => {
+	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
+	const iheight: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientHeight : 10
+	// resolve-lygia package
+	shader.value = resolveLygia(rainFragment)
+	// @ts-ignore //this is a hack. glslCanvas is loaded in the head html
+	sandbox.value = new GlslCanvas(heroCanvas.value)
+	heroCanvas.value.style.width = "100%"
+	heroCanvas.value.style.height = "100%"
+	// Load resolved shader
+	sandbox.value.load(shader.value)
+	// Load a new texture and assign it to uniform sampler2D u_texture
+	sandbox.value.setUniform("u_tex0", photo)
+	sandbox.value.setUniform("u_tex0Resolution", iwidth / iheight)
+	// weather
+	updateUniforms()
+	sandbox.value.setUniform("hrs", hrs.value)
+	sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
+})
+
+//Listeners / set uniforms
+watch([canvaswidth, canvasheight, apidata.value], () => {
+	updateUniforms()
+})
+
+//TODO: Debug listeners (avoid on production)
+watch([hrs, cheapNormals], () => {
+	sandbox.value.setUniform("hrs", hrs.value)
+	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
+})
+//end debug listeners
 </script>
 
 <template>
@@ -217,7 +200,8 @@ const setIcon = computed(() => {
 						</template>
 						<template #description>
 							<div class="flex flex-col text-xs">
-								<span>Location: {{ coords.latitude }}, {{ coords.longitude }}</span>
+								<span>Location: {{ props.latitude }}, {{ props.longitude }}</span>
+								<h1 class="text-base">{{ apidata.location.name }}</h1>
 								<span>FPS: {{ fps }}</span>
 							</div>
 						</template>
@@ -263,23 +247,23 @@ const setIcon = computed(() => {
 		</UModal>
 
 
-		<Transition>
+		<!-- <Transition>
 			<div v-show="heroLoading" class="absolute top-0 w-full h-screen flex items-center justify-center bg-black z-40">
 				<UAvatar icon="i-mdi-cloud-clock-outline" size="2xl" class="animate-pulse" :ui="{
 					background: 'bg-indigo-500 dark:bg-indigo-800',
 					text: 'dark:text-white'
 				}" />
 			</div>
-		</Transition>
+		</Transition> -->
 	</div>
 	
 	<!-- Weather Pill -->
 	<div class="absolute bottom-20 flex items-end justify-center w-full">
-		<UBadge :color="apidata?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="whitespace-nowrap text-base min-w-max" :ui="{ rounded: 'rounded-full' }">
+		<UBadge :color="apidata?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="whitespace-nowrap text-base min-w-max px-4" :ui="{ rounded: 'rounded-full' }">
 			<UTooltip :text="setCondition(apidata?.current.condition.code)" class="flex-shrink-0">
 				<img :src="setIcon" />
 			</UTooltip>
-			<span class="flex items-center pr-4 -ml-2"><UIcon name="i-mdi-thermometer" />{{ apidata?.current.temp_c }} °C</span>
+			<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ apidata?.current.temp_c }} °C</span>
 			<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ apidata?.current.precip_mm }} mm</span>
 		</UBadge>
 	</div>
