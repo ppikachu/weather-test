@@ -43,15 +43,6 @@ useHead({
 const { coords, error, resume, pause } = useGeolocation()
 const location = useBrowserLocation()
 const fps = useFps()
-const refreshing = ref(false)
-const refreshAll = async () => {
-	refreshing.value = true
-	try {
-		await refreshNuxtData()
-	} finally {
-		refreshing.value = false
-	}
-}
 </script>
 
 <template>
@@ -67,7 +58,6 @@ const refreshAll = async () => {
 				<div class="text-xs flex flex-col space-y-2">
 					<span>FPS: {{ fps }}</span>
 					<span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span>
-					<UButton :disabled="refreshing" @click="refreshAll()" variant="soft" icon="i-mdi-refresh" size="2xs" class="w-min" :ui="{ rounded: 'rounded-full' }" />
 				</div>
 			</UBadge>
 		</section>

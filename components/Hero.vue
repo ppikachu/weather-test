@@ -102,35 +102,41 @@ const options: object = {
 		'X-RapidAPI-Host': config.public.RapidAPIHost
 	},
 	lang: 'es',
-	immediate: false,
+	// immediate: false,
 	watch: false
 }
-const { data:apidata, pending, error, refresh } = await useFetch<WeatherData>(url, options)
-if (props.test) apidata.value = fakeData as WeatherData
-
+// test weather check
+const { data: apidata, pending, error, refresh } = await useFetch<WeatherData>(url, options)
 const isDay = ref(apidata.value?.current.is_day === 1 ? true : false) // [0,1]
-const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
+const hrs = ref(new Date(apidata.value?.location.localtime as string).getHours())
+const refreshing = ref(false)
+const refreshAll = async () => {
+	refreshing.value = true
+	try {
+		await refreshNuxtData()
+	} finally {
+		refreshing.value = false
+		updateUniforms()
+		// if(apidata.value) apidata.value.current.is_day = isDay.value ? 1 : 0
+		isDay.value = apidata.value?.current.is_day === 1 ? true : false
+		hrs.value = new Date(apidata.value?.location.localtime as string).getHours()
+	}
+}
 
 //TODO: size?, format?, something or fix this!
 const $img = useImage()
 const photo = $img(props.texture, { format: 'webp' })
-// test weather check
 function thunderLevel(code: any) {
 	const codeNumber = typeof code === "number" ? code : parseInt(code)
 	const thunderLevel = thunderLevels.find((item) => item.code === codeNumber)
 	return thunderLevel?.thlevel
 }
-function getHourofDay(dateString: string) {
-	const dateObject = new Date(dateString)
-	const hour = dateObject.getHours()
-	return hour
-}
 function updateUniforms() {
 	if (sandbox.value && apidata.value) {
 		const { current } = apidata.value
-		const { is_day, temp_c, humidity, precip_mm, condition } = current
+		const { temp_c, humidity, precip_mm, condition } = current
 		sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) // canvas resolution
-		sandbox.value.setUniform("is_day", is_day)
+		sandbox.value.setUniform("hrs", hrs.value)
 		sandbox.value.setUniform("thunder", thunderLevel(condition.code))
 		sandbox.value.setUniform("temp_c", temp_c)
 		sandbox.value.setUniform("precip_mm", precip_mm)
@@ -156,7 +162,6 @@ onMounted(() => {
 	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
 	const iheight: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientHeight : 10
 	//fetch api data
-	refresh()
 	// resolve-lygia package
 	shader.value = resolveLygia(rainFragment)
 	// @ts-ignore //this is a hack. glslCanvas is loaded in the head html
@@ -170,18 +175,14 @@ onMounted(() => {
 	sandbox.value.setUniform("u_tex0Resolution", iwidth / iheight)
 	// weather
 	updateUniforms()
-	sandbox.value.setUniform("hrs", hrs.value)
-	sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
 	heroLoading.value = false
 })
 
 //Listeners / set uniforms
-watch([canvaswidth, canvasheight, apidata.value], () => {
+watch([canvaswidth, canvasheight, apidata], () => {
 	updateUniforms()
 })
-
-//TODO: Debug listeners (avoid on production)
-watch([hrs, cheapNormals, isDay], () => {
+watch([hrs, cheapNormals, isDay], () => {//TODO: Debug listeners (avoid on production)
 	sandbox.value.setUniform("hrs", hrs.value)
 	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
 	if(apidata.value) {apidata.value.current.is_day = isDay.value ? 1 : 0}
@@ -200,8 +201,9 @@ watch([hrs, cheapNormals, isDay], () => {
 					<UAlert v-if="location.hostname === 'localhost'" title="" icon="i-mdi-alert-circle-outline" color="yellow"
 						variant="soft" :ui="{ padding: 'p-2' }">
 						<template #description>
-							<div class="flex flex-col text-xs">
+							<div class="flex flex-col text-xs space-y-2">
 								<span>Props location: {{ props.latitude }}, {{ props.longitude }}</span>
+								<UButton :disabled="refreshing" @click="refreshAll()" color="green" label="Update" variant="soft" icon="i-mdi-refresh" size="2xs" class="w-min" />
 							</div>
 						</template>
 					</UAlert>
@@ -249,15 +251,6 @@ watch([hrs, cheapNormals, isDay], () => {
 				</template>
 			</UCard>
 		</UModal>
-
-		<!-- <Transition>
-			<div v-show="heroLoading" class="absolute top-0 w-full h-screen flex items-center justify-center bg-black z-40">
-				<UAvatar icon="i-mdi-cloud-clock-outline" size="2xl" class="animate-pulse" :ui="{
-					background: 'bg-indigo-500 dark:bg-indigo-800',
-					text: 'dark:text-white'
-				}" />
-			</div>
-		</Transition> -->
 	</div>
 	
 	<!-- Weather Pill -->
