@@ -7,7 +7,6 @@ export default defineNuxtConfig({
 		"@vueuse/nuxt",
 		"@vite-pwa/nuxt",
 		"@nuxtjs/device",
-		"@pinia/nuxt",
 	],
 	runtimeConfig: {
 		public: {

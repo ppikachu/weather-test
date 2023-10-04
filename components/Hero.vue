@@ -172,6 +172,7 @@ onMounted(() => {
 	updateUniforms()
 	sandbox.value.setUniform("hrs", hrs.value)
 	sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
+	heroLoading.value = false
 })
 
 //Listeners / set uniforms
@@ -195,15 +196,17 @@ watch([hrs, cheapNormals, isDay], () => {
 		<UModal v-model="isOpen" :overlay="false">
 			<UCard v-if="apidata">
 				<div class="space-y-4 text-sm">
+
 					<UAlert v-if="location.hostname === 'localhost'" title="" icon="i-mdi-alert-circle-outline" color="yellow"
 						variant="soft" :ui="{ padding: 'p-2' }">
 						<template #description>
 							<div class="flex flex-col text-xs">
 								<span>Props location: {{ props.latitude }}, {{ props.longitude }}</span>
-								<h1 class="text-base">{{ apidata.location.name }}</h1>
 							</div>
 						</template>
 					</UAlert>
+
+					<h1 class="text-base">{{ apidata.location.name }}</h1>
 					<UFormGroup label="Condition">
 						<USelect
 							v-model="apidata.current.condition.code"
@@ -236,14 +239,16 @@ watch([hrs, cheapNormals, isDay], () => {
 				</div>
 				<template #footer>
 					<div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 items-center justify-center text-xs text-gray-500">
-						<span>click outside to dismiss or press <UKbd value="Esc" /></span>
+						<span>
+							<span>click outside to dismiss</span>
+							<span v-if="!isMobile"> or press <UKbd value="Esc" /></span>
+						</span>
 						<span class="hidden sm:inline">/</span>
 						<span>Powered by <a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a></span>
 					</div>
 				</template>
 			</UCard>
 		</UModal>
-
 
 		<!-- <Transition>
 			<div v-show="heroLoading" class="absolute top-0 w-full h-screen flex items-center justify-center bg-black z-40">
@@ -256,15 +261,17 @@ watch([hrs, cheapNormals, isDay], () => {
 	</div>
 	
 	<!-- Weather Pill -->
-	<div class="absolute bottom-20 flex items-end justify-center w-full">
-		<UBadge :color="apidata?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="whitespace-nowrap text-base min-w-max px-4" :ui="{ rounded: 'rounded-full' }">
-			<UTooltip :text="setCondition(apidata?.current.condition.code)" class="flex-shrink-0">
-				<img :src="setIcon" />
-			</UTooltip>
-			<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ apidata?.current.temp_c }} °C</span>
-			<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ apidata?.current.precip_mm }} mm</span>
-		</UBadge>
-	</div>
+	<Transition>
+		<div v-if="!heroLoading" class="absolute bottom-20 flex items-end justify-center w-full">
+			<UBadge :color="apidata?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="whitespace-nowrap text-base min-w-max px-4" :ui="{ rounded: 'rounded-full' }">
+				<UTooltip :text="setCondition(apidata?.current.condition.code)" class="flex-shrink-0">
+					<img :src="setIcon" />
+				</UTooltip>
+				<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ apidata?.current.temp_c }} °C</span>
+				<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ apidata?.current.precip_mm }} mm</span>
+			</UBadge>
+		</div>
+	</Transition>
 	<!-- Weather Pill -->
 
 </template>
