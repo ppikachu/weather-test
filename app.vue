@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 useSeoMeta({
 	title: 'Weather App',
 	description: 'Animated weather effects',
@@ -42,32 +42,40 @@ useHead({
 
 const { coords, error, resume, pause } = useGeolocation()
 const location = useBrowserLocation()
+const fps = useFps()
+const refreshing = ref(false)
+const refreshAll = async () => {
+	refreshing.value = true
+	try {
+		await refreshNuxtData()
+	} finally {
+		refreshing.value = false
+	}
+}
 </script>
 
 <template>
 	<div>
 		<VitePwaManifest />
 		<NuxtLoadingIndicator />
+		
+		<section class="absolute top-2 left-2 z-20">
+			<UBadge v-if="location.hostname === 'localhost'"
+				title="debug"
+				variant="soft"
+			>
+				<div class="text-xs flex flex-col space-y-2">
+					<span>FPS: {{ fps }}</span>
+					<span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span>
+					<UButton :disabled="refreshing" @click="refreshAll()" variant="soft" icon="i-mdi-refresh" size="2xs" class="w-min" :ui="{ rounded: 'rounded-full' }" />
+				</div>
+			</UBadge>
+		</section>
 
 		<Hero
 			:latitude="coords.latitude !== Infinity ? coords.latitude : -34.58"
 			:longitude="coords.longitude !== Infinity ? coords.longitude : -58.4"
 		/>
-
-			<UAlert v-if="location.hostname === 'localhost'"
-				title="debug"
-				icon="i-mdi-alert-circle-outline"
-				color="yellow"
-				variant="soft"
-				:ui="{ padding: 'p-2', wrapper: 'absolute w-1/3 top-2 left-2' }"
-			>
-				<template #title>Debug</template>
-				<template #description>
-					<div class="flex flex-col text-xs">
-						<span>Location: {{ coords.latitude }}, {{ coords.longitude }}</span>
-					</div>
-				</template>
-			</UAlert>
 
 	</div>
 </template>

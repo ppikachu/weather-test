@@ -34,14 +34,12 @@ const props: Props = defineProps({
 	longitude: { type: Number, default: -58.39 }
 })
 
-const isOpen = ref(false) // modal
-const isDay = computed(() => apidata.value?.current.is_day === 1 ? true : false) // [0,1]
+const isOpen = ref(location.value.hostname === 'localhost')//debug modal
 const shader = ref()
 const cheapNormals = ref(isMobile ? true : false)
 const heroCanvas = ref()
 const sandbox = ref()
 const heroLoading = ref(true)
-const fps = useFps()
 const thunderLevels = [
 	{ code: 1000, thlevel: 0.00, text: "Clear", icon: "113" },
 	{ code: 1003, thlevel: 0.00, text: "Partly cloudy", icon: "116" },
@@ -92,8 +90,11 @@ const thunderLevels = [
 	{ code: 1279, thlevel: 0.25, text: "Patchy light snow with thunder", icon: "392" },
 	{ code: 1282, thlevel: 0.50, text: "Moderate or heavy snow with thunder", icon: "395" },
 ]
+
 // api weather
-const url = 'https://weatherapi-com.p.rapidapi.com/current.json?q='+props.latitude+','+props.longitude
+const url = computed(() => {
+	return 'https://weatherapi-com.p.rapidapi.com/current.json?q='+props.latitude+','+props.longitude
+})
 const options: object = {
 	method: 'GET',
 	headers: {
@@ -101,18 +102,19 @@ const options: object = {
 		'X-RapidAPI-Host': config.public.RapidAPIHost
 	},
 	lang: 'es',
+	immediate: false,
+	watch: false
 }
-const { data: apidata, pending, error, refresh } = await useFetch<WeatherData>(url, options)
-const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
+const { data:apidata, pending, error, refresh } = await useFetch<WeatherData>(url, options)
+if (props.test) apidata.value = fakeData as WeatherData
 
+const isDay = ref(apidata.value?.current.is_day === 1 ? true : false) // [0,1]
+const hrs = ref(getHourofDay(apidata.value?.location.localtime as string))
 
 //TODO: size?, format?, something or fix this!
 const $img = useImage()
 const photo = $img(props.texture, { format: 'webp' })
 // test weather check
-if (props.test) {
-	apidata.value = fakeData as WeatherData
-}
 function thunderLevel(code: any) {
 	const codeNumber = typeof code === "number" ? code : parseInt(code)
 	const thunderLevel = thunderLevels.find((item) => item.code === codeNumber)
@@ -136,9 +138,7 @@ function updateUniforms() {
 		sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
 	}
 }
-const computedCheapNormals = computed(() => {
-	return isMobile ? 1 : 0
-})
+const computedCheapNormals = computed(() => isMobile ? 1 : 0)
 function setCondition(code: any) {
 	const codeNumber = typeof code === "number"? code : parseInt(code)
 	const matchedCondition = thunderLevels.find((item) => item.code === codeNumber)
@@ -155,6 +155,8 @@ const setIcon = computed(() => {
 onMounted(() => {
 	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
 	const iheight: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientHeight : 10
+	//fetch api data
+	refresh()
 	// resolve-lygia package
 	shader.value = resolveLygia(rainFragment)
 	// @ts-ignore //this is a hack. glslCanvas is loaded in the head html
@@ -178,31 +180,27 @@ watch([canvaswidth, canvasheight, apidata.value], () => {
 })
 
 //TODO: Debug listeners (avoid on production)
-watch([hrs, cheapNormals], () => {
+watch([hrs, cheapNormals, isDay], () => {
 	sandbox.value.setUniform("hrs", hrs.value)
 	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
+	if(apidata.value) {apidata.value.current.is_day = isDay.value ? 1 : 0}
 })
 //end debug listeners
 </script>
 
 <template>
-	<VitePwaManifest />
 	<div id="divPortada" class="relative hero-area">
 		<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
 		<canvas ref="heroCanvas" class="sticky" />
 		<UModal v-model="isOpen" :overlay="false">
 			<UCard v-if="apidata">
 				<div class="space-y-4 text-sm">
-					<UAlert v-if="location.hostname === 'localhost'" title="debuf" icon="i-mdi-alert-circle-outline" color="yellow"
+					<UAlert v-if="location.hostname === 'localhost'" title="" icon="i-mdi-alert-circle-outline" color="yellow"
 						variant="soft" :ui="{ padding: 'p-2' }">
-						<template #title>
-							Debug
-						</template>
 						<template #description>
 							<div class="flex flex-col text-xs">
-								<span>Location: {{ props.latitude }}, {{ props.longitude }}</span>
+								<span>Props location: {{ props.latitude }}, {{ props.longitude }}</span>
 								<h1 class="text-base">{{ apidata.location.name }}</h1>
-								<span>FPS: {{ fps }}</span>
 							</div>
 						</template>
 					</UAlert>
@@ -231,7 +229,7 @@ watch([hrs, cheapNormals], () => {
 						<UFormGroup label="Cheap normals">
 							<UToggle v-model="cheapNormals" />
 						</UFormGroup>
-						<UFormGroup label="Day/night">
+						<UFormGroup label="Night / Day">
 							<UToggle v-model="isDay" />
 						</UFormGroup>
 					</div>
