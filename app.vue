@@ -55,7 +55,7 @@ const fps = useFps()
 				title="debug"
 				variant="soft"
 			>
-				<div class="text-xs flex flex-col space-y-2">
+				<div class="text-xs flex flex-col">
 					<span>FPS: {{ fps }}</span>
 					<span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span>
 				</div>

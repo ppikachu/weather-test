@@ -106,9 +106,9 @@ const options: object = {
 	watch: false
 }
 // test weather check
-const { data: apidata, pending, error, refresh } = await useFetch<WeatherData>(url, options)
-const isDay = ref(apidata.value?.current.is_day === 1 ? true : false) // [0,1]
-const hrs = ref(new Date(apidata.value?.location.localtime as string).getHours())
+const { data, pending, error, refresh } = await useFetch<WeatherData>(url, options)
+const isDay = ref(data.value?.current.is_day === 1 ? true : false) // [0,1]
+const hrs = ref(new Date(data.value?.location.localtime as string).getHours())
 const refreshing = ref(false)
 const refreshAll = async () => {
 	refreshing.value = true
@@ -117,9 +117,9 @@ const refreshAll = async () => {
 	} finally {
 		refreshing.value = false
 		updateUniforms()
-		// if(apidata.value) apidata.value.current.is_day = isDay.value ? 1 : 0
-		isDay.value = apidata.value?.current.is_day === 1 ? true : false
-		hrs.value = new Date(apidata.value?.location.localtime as string).getHours()
+		// if(data.value) data.value.current.is_day = isDay.value ? 1 : 0
+		isDay.value = data.value?.current.is_day === 1 ? true : false
+		hrs.value = new Date(data.value?.location.localtime as string).getHours()
 	}
 }
 
@@ -132,8 +132,8 @@ function thunderLevel(code: any) {
 	return thunderLevel?.thlevel
 }
 function updateUniforms() {
-	if (sandbox.value && apidata.value) {
-		const { current } = apidata.value
+	if (sandbox.value && data.value) {
+		const { current } = data.value
 		const { temp_c, humidity, precip_mm, condition } = current
 		sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) // canvas resolution
 		sandbox.value.setUniform("hrs", hrs.value)
@@ -151,10 +151,10 @@ function setCondition(code: any) {
 	return matchedCondition?.text as string
 }
 const setIcon = computed(() => {
-	const code: any = apidata.value?.current.condition.code
+	const code: any = data.value?.current.condition.code
 	const codeNumber = typeof code === "number"? code : parseInt(code)
 	const matchedCondition = thunderLevels.find((item) => item.code === codeNumber)
-	const dayOrNight = apidata.value?.current.is_day ? "day/" : "night/"
+	const dayOrNight = data.value?.current.is_day ? "day/" : "night/"
 	return "/images/weather/64x64/" + dayOrNight + matchedCondition?.icon + ".png"
 })
 
@@ -179,13 +179,13 @@ onMounted(() => {
 })
 
 //Listeners / set uniforms
-watch([canvaswidth, canvasheight, apidata], () => {
-	updateUniforms()
-})
-watch([hrs, cheapNormals, isDay], () => {//TODO: Debug listeners (avoid on production)
+watchDeep(data, () => { updateUniforms() })
+watch([canvaswidth, canvasheight], () => { sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) })
+//TODO: Debug listeners (avoid on production):
+watch([hrs, cheapNormals, isDay], () => {
 	sandbox.value.setUniform("hrs", hrs.value)
 	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
-	if(apidata.value) {apidata.value.current.is_day = isDay.value ? 1 : 0}
+	if(data.value) {data.value.current.is_day = isDay.value ? 1 : 0}
 })
 //end debug listeners
 </script>
@@ -195,37 +195,36 @@ watch([hrs, cheapNormals, isDay], () => {//TODO: Debug listeners (avoid on produ
 		<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
 		<canvas ref="heroCanvas" class="sticky" />
 		<UModal v-model="isOpen" :overlay="false">
-			<UCard v-if="apidata">
+			<UCard v-if="data">
 				<div class="space-y-4 text-sm">
 
-					<UAlert v-if="location.hostname === 'localhost'" title="" icon="i-mdi-alert-circle-outline" color="yellow"
+					<UAlert v-if="location.hostname === 'localhost'" title="Debug" icon="i-mdi-alert-circle-outline" color="yellow"
 						variant="soft" :ui="{ padding: 'p-2' }">
 						<template #description>
 							<div class="flex flex-col text-xs space-y-2">
-								<span>Props location: {{ props.latitude }}, {{ props.longitude }}</span>
 								<UButton :disabled="refreshing" @click="refreshAll()" color="green" label="Update" variant="soft" icon="i-mdi-refresh" size="2xs" class="w-min" />
 							</div>
 						</template>
 					</UAlert>
 
-					<h1 class="text-base">{{ apidata.location.name }}</h1>
+					<h1 class="text-base">{{ data.location.name }}</h1>
 					<UFormGroup label="Condition">
 						<USelect
-							v-model="apidata.current.condition.code"
+							v-model="data.current.condition.code"
 							:options="thunderLevels"
 							value-attribute="code"
 							option-attribute="text"
 							size="sm"
 						/>
 					</UFormGroup>
-					<UFormGroup :label="'Temperature: ' + apidata.current.temp_c + '°C'">
-						<URange v-model="apidata.current.temp_c" size="sm" :min="0" :max="40" />
+					<UFormGroup :label="'Temperature: ' + data.current.temp_c + '°C'">
+						<URange v-model="data.current.temp_c" size="sm" :min="0" :max="40" />
 					</UFormGroup>
-					<UFormGroup :label="'Precipitation: ' + apidata.current.precip_mm + ' mm'">
-						<URange v-model="apidata.current.precip_mm" size="sm" :min="0" :max="20" />
+					<UFormGroup :label="'Precipitation: ' + data.current.precip_mm + ' mm'">
+						<URange v-model="data.current.precip_mm" size="sm" :min="0" :max="20" />
 					</UFormGroup>
-					<UFormGroup :label="'Humidity: ' + apidata.current.humidity + '%'">
-						<URange v-model="apidata.current.humidity" size="sm" :min="0" :max="100" />
+					<UFormGroup :label="'Humidity: ' + data.current.humidity + '%'">
+						<URange v-model="data.current.humidity" size="sm" :min="0" :max="100" />
 					</UFormGroup>
 					<UFormGroup :label="'Time: '+ hrs + ':00'">
 						<URange v-model="hrs" size="sm" :min="0" :max="24" />
@@ -256,12 +255,12 @@ watch([hrs, cheapNormals, isDay], () => {//TODO: Debug listeners (avoid on produ
 	<!-- Weather Pill -->
 	<Transition>
 		<div v-if="!heroLoading" class="absolute bottom-20 flex items-end justify-center w-full">
-			<UBadge :color="apidata?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="whitespace-nowrap text-base min-w-max px-4" :ui="{ rounded: 'rounded-full' }">
-				<UTooltip :text="setCondition(apidata?.current.condition.code)" class="flex-shrink-0">
+			<UBadge :color="data?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="whitespace-nowrap text-base min-w-max px-4" :ui="{ rounded: 'rounded-full' }">
+				<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
 					<img :src="setIcon" />
 				</UTooltip>
-				<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ apidata?.current.temp_c }} °C</span>
-				<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ apidata?.current.precip_mm }} mm</span>
+				<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C</span>
+				<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm</span>
 			</UBadge>
 		</div>
 	</Transition>
