@@ -4,8 +4,8 @@ precision highp float;
 #endif
 
 // glslviewer commands:
-// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e is_day,1 -e precip_mm,1 -e temp_c,26 -e hrs,12 -e debug,on -e textures,off -l -x 10 -y 80 -w 256 -h 256
-// record,demo.mp4,3,10
+// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e is_day,1 -e precip_mm,10 -e temp_c,26 -e hrs,12 -e debug,on -e textures,off -l -x 10 -y 80 -w 256 -h 256
+// glslviewer rain.frag ../../public/images/TimeToForest_3.png -e is_day,1 -e precip_mm,10 -e temp_c,26 -e hrs,12 -e debug,on -e textures,off -l -x 10 -y 80 -w 256 -h 256 -E sequence,10,20
 
 // https://www.shadertoy.com/view/tlSBDw
 
