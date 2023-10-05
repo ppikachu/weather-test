@@ -7,6 +7,8 @@ export default defineNuxtConfig({
 		"@vueuse/nuxt",
 		"@vite-pwa/nuxt",
 		"@nuxtjs/device",
+		"@nuxtjs/i18n",
+		"@nuxtjs/google-fonts",
 	],
 	runtimeConfig: {
 		public: {

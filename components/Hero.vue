@@ -208,7 +208,7 @@ watch([hrs, cheapNormals, isDay], () => {
 					</UAlert>
 
 					<h1 class="text-base">{{ data.location.name }}</h1>
-					<UFormGroup label="Condition">
+					<UFormGroup :label="$t('condition')">
 						<USelect
 							v-model="data.current.condition.code"
 							:options="thunderLevels"
@@ -217,23 +217,26 @@ watch([hrs, cheapNormals, isDay], () => {
 							size="sm"
 						/>
 					</UFormGroup>
-					<UFormGroup :label="'Temperature: ' + data.current.temp_c + '°C'">
+					<UFormGroup :label="$t('temperature') + ': ' + data.current.temp_c + '°C'">
 						<URange v-model="data.current.temp_c" size="sm" :min="0" :max="40" />
 					</UFormGroup>
-					<UFormGroup :label="'Precipitation: ' + data.current.precip_mm + ' mm'">
+					<UFormGroup :label="$t('precipitation') + ': ' + data.current.precip_mm + ' mm'">
 						<URange v-model="data.current.precip_mm" size="sm" :min="0" :max="20" />
 					</UFormGroup>
-					<UFormGroup :label="'Humidity: ' + data.current.humidity + '%'">
+					<UFormGroup :label="$t('humidity') + ': ' + data.current.humidity + '%'">
 						<URange v-model="data.current.humidity" size="sm" :min="0" :max="100" />
 					</UFormGroup>
-					<UFormGroup :label="'Time: '+ hrs + ':00'">
+					<UFormGroup :label="$t('time') + ': ' + hrs + ':00'">
 						<URange v-model="hrs" size="sm" :min="0" :max="24" />
 					</UFormGroup>
-					<div class="flex space-x-8 justify-around">
-						<UFormGroup label="Cheap normals">
+					<div class="flex space-x-8 justify-between">
+						<UFormGroup :label="$t('locale')">
+							<LocaleSelect />
+						</UFormGroup>
+						<UFormGroup :label="$t('cheap_normals')">
 							<UToggle v-model="cheapNormals" />
 						</UFormGroup>
-						<UFormGroup label="Night / Day">
+						<UFormGroup :label="$t('night_day')">
 							<UToggle v-model="isDay" />
 						</UFormGroup>
 					</div>
@@ -241,11 +244,11 @@ watch([hrs, cheapNormals, isDay], () => {
 				<template #footer>
 					<div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 items-center justify-center text-xs text-gray-500">
 						<span>
-							<span>click outside to dismiss</span>
-							<span v-if="!isMobile"> or press <UKbd value="Esc" /></span>
+							<span>{{ $t('dismiss_modal')}}</span>
+							<span v-if="!isMobile">{{ $t('or_press')}} <UKbd value="Esc" /></span>
 						</span>
 						<span class="hidden sm:inline">/</span>
-						<span>Powered by <a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a></span>
+						<span>{{ $t('powered_by')}}<a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a></span>
 					</div>
 				</template>
 			</UCard>
