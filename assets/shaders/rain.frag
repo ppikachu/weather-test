@@ -137,7 +137,7 @@ void main() {
 	float fade = S(0., 10., u_time);						// fade in at the start
 	float story = 0.;
 	float blurmask = 0.; 												// new focus
-	float rainAmount = precip_mm * .1;					// adjust the amount of rain
+	float rainAmount = precip_mm * .05;					// adjust the amount of rain
 	float dMaxBlur = 0.;
 	float minBlur = .1;
 	float staticDrops = S(-.5, 1.5, rainAmount)*2.;
@@ -208,7 +208,7 @@ void main() {
 	
 	// float daynightime = fract(u_time * .2);
 	float daynightime = map(hrs, 0., 24., 0., 1.);
-	float correctedcurve = parabola(daynightime, .7);
+	float correctedcurve = parabola(daynightime, 2.);
 	vec3 hrsspectrum = spectral((1. - correctedcurve) * .5 + .5, .4) + vec3(.0, .1, .5);
 
 	// these always on!
