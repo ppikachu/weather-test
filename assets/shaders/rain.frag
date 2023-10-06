@@ -134,7 +134,7 @@ void main() {
 	vec2 uv = (gl_FragCoord.xy -.5 * u_resolution.xy) / u_resolution.y;
 	float t = u_time * .2;
 	
-	float fade = S(0., 10., u_time);						// fade in at the start
+	float fade = S(0., 3., u_time);						// fade in at the start
 	float story = 0.;
 	float blurmask = 0.; 												// new focus
 	float rainAmount = precip_mm * .05;					// adjust the amount of rain

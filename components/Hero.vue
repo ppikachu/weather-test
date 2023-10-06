@@ -266,12 +266,11 @@ watch([lastUpdated], () => { minutesDiff(lastUpdated.value, new Date()) > 1 ? co
 
 				</div>
 				<template #footer>
-					<div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 items-center justify-center text-sm text-gray-500">
-						<span>
+					<div class="flex flex-col space-y-2 items-center justify-center text-sm text-gray-500">
+						<div>
 							<span>{{ $t('dismiss_modal')}}</span>
 							<span v-if="!isMobile">{{ $t('or_press')}} <UKbd value="Esc" /></span>
-						</span>
-						<span class="hidden sm:inline">/</span>
+						</div>
 						<span>{{ $t('powered_by')}}<a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a> {{ timeAgo }}</span>
 					</div>
 				</template>
@@ -281,19 +280,25 @@ watch([lastUpdated], () => { minutesDiff(lastUpdated.value, new Date()) > 1 ? co
 	
 	<!-- Weather Pill -->
 	<Transition>
-		<div v-if="!heroLoading" class="absolute bottom-20 flex items-end justify-center w-full">
+		<div class="absolute bottom-20 flex items-end justify-center w-full">
 			<UBadge
+				v-show="!error && !pending"
 				:color="data?.current.is_day ? 'amber' : 'indigo'"
 				variant="soft"
 				size="md"
 				:ui="{ rounded: 'rounded-full', size: { md: 'text-2xl whitespace-nowrap' } }"
 			>
-				<div v-show="!error">
-					<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
-						<img :src="setIcon" />
-					</UTooltip>
-					<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C</span>
-					<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm</span>
+				<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
+					<img :src="setIcon" />
+				</UTooltip>
+				<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C</span>
+				<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm</span>
+			</UBadge>
+
+			<UBadge v-show="error" color="red" size="lg">
+				<div class="flex items-center space-x-2">
+					<UIcon name="i-mdi-alert-circle-outline" />
+					<span>Could not load weather data</span>
 				</div>
 			</UBadge>
 		</div>
