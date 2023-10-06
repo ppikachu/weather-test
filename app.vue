@@ -59,6 +59,7 @@ const focused = useWindowFocus()
 				<div class="text-xs flex flex-col">
 					<span>FPS: {{ fps }}</span>
 					<span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span>
+					<span>focused: {{ focused }}</span>
 				</div>
 			</UBadge>
 		</section>

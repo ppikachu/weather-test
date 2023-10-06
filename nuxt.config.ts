@@ -28,7 +28,7 @@ export default defineNuxtConfig({
 			description: "Animated weather effects",
 			id: "/",
 			start_url: "/",
-			display: "minimal-ui",
+			display: "standalone",
 			theme_color: "#432",
 			background_color: "#000",
 			icons: [

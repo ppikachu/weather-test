@@ -91,7 +91,7 @@ const thunderLevels = [
 	{ code: 1282, thlevel: 0.50, text: "Moderate or heavy snow with thunder", icon: "395" },
 ]
 
-// api weather
+//fetch api data
 const url = computed(() => {
 	return 'https://weatherapi-com.p.rapidapi.com/current.json?q='+props.latitude+','+props.longitude
 })
@@ -108,7 +108,10 @@ const options: object = {
 // test weather check
 const { data, pending, error, refresh } = await useFetch<WeatherData>(url, options)
 const isDay = ref(data.value?.current.is_day === 1 ? true : false) // [0,1]
-const hrs = ref(new Date(data.value?.location.localtime as string).getHours())
+const hrs = ref()
+const lastUpdated = ref(new Date())
+const timeAgo = useTimeAgo(lastUpdated.value)
+console.log(lastUpdated)
 const refreshing = ref(false)
 const refreshAll = async () => {
 	refreshing.value = true
@@ -117,7 +120,6 @@ const refreshAll = async () => {
 	} finally {
 		refreshing.value = false
 		updateUniforms()
-		// if(data.value) data.value.current.is_day = isDay.value ? 1 : 0
 		isDay.value = data.value?.current.is_day === 1 ? true : false
 		hrs.value = new Date(data.value?.location.localtime as string).getHours()
 	}
@@ -126,11 +128,23 @@ const refreshAll = async () => {
 //TODO: size?, format?, something or fix this!
 const $img = useImage()
 const photo = $img(props.texture, { format: 'webp' })
+
 function thunderLevel(code: any) {
 	const codeNumber = typeof code === "number" ? code : parseInt(code)
 	const thunderLevel = thunderLevels.find((item) => item.code === codeNumber)
 	return thunderLevel?.thlevel
 }
+
+function updateHours() {
+	hrs.value = new Date(data.value?.location.localtime as string).getHours()
+}
+
+function minutesDiff(dateTimeValue2: Date, dateTimeValue1: Date) {
+	 var differenceValue =(dateTimeValue2.getTime() - dateTimeValue1.getTime()) / 1000
+	 differenceValue /= 60
+	 return Math.abs(Math.round(differenceValue))
+}
+
 function updateUniforms() {
 	if (sandbox.value && data.value) {
 		const { current } = data.value
@@ -145,11 +159,13 @@ function updateUniforms() {
 	}
 }
 const computedCheapNormals = computed(() => isMobile ? 1 : 0)
+
 function setCondition(code: any) {
 	const codeNumber = typeof code === "number"? code : parseInt(code)
 	const matchedCondition = thunderLevels.find((item) => item.code === codeNumber)
 	return matchedCondition?.text as string
 }
+
 const setIcon = computed(() => {
 	const code: any = data.value?.current.condition.code
 	const codeNumber = typeof code === "number"? code : parseInt(code)
@@ -161,10 +177,9 @@ const setIcon = computed(() => {
 onMounted(() => {
 	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
 	const iheight: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientHeight : 10
-	//fetch api data
 	// resolve-lygia package
 	shader.value = resolveLygia(rainFragment)
-	// @ts-ignore //this is a hack. glslCanvas is loaded in the head html
+	// @ts-ignore this is a //HACK. glslCanvas is loaded in the head html
 	sandbox.value = new GlslCanvas(heroCanvas.value)
 	heroCanvas.value.style.width = "100%"
 	heroCanvas.value.style.height = "100%"
@@ -174,12 +189,14 @@ onMounted(() => {
 	sandbox.value.setUniform("u_tex0", photo)
 	sandbox.value.setUniform("u_tex0Resolution", iwidth / iheight)
 	// weather
+	updateHours()
 	updateUniforms()
 	heroLoading.value = false
 })
 
 //Listeners / set uniforms
 watchDeep(data, () => { updateUniforms() })
+
 watch([canvaswidth, canvasheight], () => { sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) })
 //TODO: Debug listeners (avoid on production):
 watch([hrs, cheapNormals, isDay], () => {
@@ -187,6 +204,7 @@ watch([hrs, cheapNormals, isDay], () => {
 	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
 	if(data.value) {data.value.current.is_day = isDay.value ? 1 : 0}
 })
+watch([lastUpdated], () => { minutesDiff(lastUpdated.value, new Date()) > 1 ? console.log("Refreshing...") : null })
 //end debug listeners
 </script>
 
@@ -212,7 +230,7 @@ watch([hrs, cheapNormals, isDay], () => {
 
 					<h1 class="text-lg">
 						{{ data.location.name }}
-						<UButton :disabled="refreshing" @click="refreshAll()" color="green" :label="$t('update')" variant="soft" icon="i-mdi-refresh" size="2xs" class="w-min" />
+						<UButton :disabled="pending" @click="refreshAll" color="green" :label="$t('update')" variant="soft" icon="i-mdi-refresh" size="2xs" class="w-min" />
 					</h1>
 					<UFormGroup :label="$t('condition')">
 						<USelect
@@ -240,7 +258,8 @@ watch([hrs, cheapNormals, isDay], () => {
 						variant="soft" :ui="{ padding: 'p-2' }">
 						<template #description>
 							<div class="flex flex-col text-xs space-y-2">
-								
+								<span>{{ lastUpdated }}</span>
+								<span>{{ timeAgo }}</span>
 							</div>
 						</template>
 					</UAlert>
@@ -253,7 +272,7 @@ watch([hrs, cheapNormals, isDay], () => {
 							<span v-if="!isMobile">{{ $t('or_press')}} <UKbd value="Esc" /></span>
 						</span>
 						<span class="hidden sm:inline">/</span>
-						<span>{{ $t('powered_by')}}<a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a></span>
+						<span>{{ $t('powered_by')}}<a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a> {{ timeAgo }}</span>
 					</div>
 				</template>
 			</UCard>
@@ -269,11 +288,13 @@ watch([hrs, cheapNormals, isDay], () => {
 				size="md"
 				:ui="{ rounded: 'rounded-full', size: { md: 'text-2xl whitespace-nowrap' } }"
 			>
-				<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
-					<img :src="setIcon" />
-				</UTooltip>
-				<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C</span>
-				<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm</span>
+				<div v-show="!error">
+					<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
+						<img :src="setIcon" />
+					</UTooltip>
+					<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C</span>
+					<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm</span>
+				</div>
 			</UBadge>
 		</div>
 	</Transition>
