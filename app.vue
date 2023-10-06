@@ -43,6 +43,7 @@ useHead({
 const { coords, error, resume, pause } = useGeolocation()
 const location = useBrowserLocation()
 const fps = useFps()
+const focused = useWindowFocus()
 </script>
 
 <template>
