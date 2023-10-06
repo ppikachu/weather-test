@@ -72,6 +72,17 @@ export default defineNuxtConfig({
 			// type: 'module',
 		},
 	},
+	googleFonts: {
+		families: {
+			// "Young+Serif": true,
+			Gabarito: true,
+			// Lato: [100, 300],
+			// Raleway: {
+			// 	wght: [100, 400],
+			// 	ital: [100],
+			// },
+		},
+	},
 	ui: {
 		icons: ["mdi"],
 	},

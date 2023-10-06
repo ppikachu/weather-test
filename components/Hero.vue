@@ -196,18 +196,24 @@ watch([hrs, cheapNormals, isDay], () => {
 		<canvas ref="heroCanvas" class="sticky" />
 		<UModal v-model="isOpen" :overlay="false">
 			<UCard v-if="data">
-				<div class="space-y-4 text-sm">
+				<div class="space-y-4">
 
-					<UAlert v-if="location.hostname === 'localhost'" title="Debug" icon="i-mdi-alert-circle-outline" color="yellow"
-						variant="soft" :ui="{ padding: 'p-2' }">
-						<template #description>
-							<div class="flex flex-col text-xs space-y-2">
-								<UButton :disabled="refreshing" @click="refreshAll()" color="green" label="Update" variant="soft" icon="i-mdi-refresh" size="2xs" class="w-min" />
-							</div>
-						</template>
-					</UAlert>
+					<div class="flex space-x-8 justify-between">
+						<UFormGroup :label="$t('locale')">
+							<LocaleSelect />
+						</UFormGroup>
+						<UFormGroup :label="$t('cheap_normals')">
+							<UToggle v-model="cheapNormals" />
+						</UFormGroup>
+						<UFormGroup :label="$t('night_day')">
+							<UToggle v-model="isDay" />
+						</UFormGroup>
+					</div>
 
-					<h1 class="text-base">{{ data.location.name }}</h1>
+					<h1 class="text-lg">
+						{{ data.location.name }}
+						<UButton :disabled="refreshing" @click="refreshAll()" color="green" :label="$t('update')" variant="soft" icon="i-mdi-refresh" size="2xs" class="w-min" />
+					</h1>
 					<UFormGroup :label="$t('condition')">
 						<USelect
 							v-model="data.current.condition.code"
@@ -229,20 +235,19 @@ watch([hrs, cheapNormals, isDay], () => {
 					<UFormGroup :label="$t('time') + ': ' + hrs + ':00'">
 						<URange v-model="hrs" size="sm" :min="0" :max="24" />
 					</UFormGroup>
-					<div class="flex space-x-8 justify-between">
-						<UFormGroup :label="$t('locale')">
-							<LocaleSelect />
-						</UFormGroup>
-						<UFormGroup :label="$t('cheap_normals')">
-							<UToggle v-model="cheapNormals" />
-						</UFormGroup>
-						<UFormGroup :label="$t('night_day')">
-							<UToggle v-model="isDay" />
-						</UFormGroup>
-					</div>
+
+					<UAlert v-if="location.hostname === 'localhost'" title="Debug" icon="i-mdi-alert-circle-outline" color="yellow"
+						variant="soft" :ui="{ padding: 'p-2' }">
+						<template #description>
+							<div class="flex flex-col text-xs space-y-2">
+								
+							</div>
+						</template>
+					</UAlert>
+
 				</div>
 				<template #footer>
-					<div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 items-center justify-center text-xs text-gray-500">
+					<div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 items-center justify-center text-sm text-gray-500">
 						<span>
 							<span>{{ $t('dismiss_modal')}}</span>
 							<span v-if="!isMobile">{{ $t('or_press')}} <UKbd value="Esc" /></span>
@@ -258,7 +263,12 @@ watch([hrs, cheapNormals, isDay], () => {
 	<!-- Weather Pill -->
 	<Transition>
 		<div v-if="!heroLoading" class="absolute bottom-20 flex items-end justify-center w-full">
-			<UBadge :color="data?.current.is_day ? 'amber' : 'gray'" variant="soft" size="lg" class="whitespace-nowrap text-base min-w-max px-4" :ui="{ rounded: 'rounded-full' }">
+			<UBadge
+				:color="data?.current.is_day ? 'amber' : 'indigo'"
+				variant="soft"
+				size="md"
+				:ui="{ rounded: 'rounded-full', size: { md: 'text-2xl whitespace-nowrap' } }"
+			>
 				<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
 					<img :src="setIcon" />
 				</UTooltip>
