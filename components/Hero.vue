@@ -2,7 +2,6 @@
 // @ts-ignore
 import { resolveLygia } from 'resolve-lygia'
 import rainFragment from '~/assets/shaders/rain.frag?raw'
-import fakeData from '~/assets/sample-data-rain.json'
 // import GlslCanvas from 'glslCanvas'
 
 //TODO: use package or minified js
@@ -26,7 +25,6 @@ interface Props {
 	latitude: number,
 	longitude: number,
 }
-
 const props: Props = defineProps({
 	texture: { type: String, default: '/images/TimeToForest_3.png' },
 	test: { type: Boolean, default: false },
@@ -34,12 +32,6 @@ const props: Props = defineProps({
 	longitude: { type: Number, default: -58.39 }
 })
 
-const isOpen = ref(location.value.hostname === 'localhost')//debug modal
-const shader = ref()
-const cheapNormals = ref(isMobile ? true : false)
-const heroCanvas = ref()
-const sandbox = ref()
-const heroLoading = ref(true)
 const thunderLevels = [
 	{ code: 1000, thlevel: 0.00, text: "Clear", icon: "113" },
 	{ code: 1003, thlevel: 0.00, text: "Partly cloudy", icon: "116" },
@@ -91,6 +83,13 @@ const thunderLevels = [
 	{ code: 1282, thlevel: 0.50, text: "Moderate or heavy snow with thunder", icon: "395" },
 ]
 
+const heroCanvas = ref()
+const sandbox = ref()
+const shader = ref()
+const cheapNormals = ref(isMobile ? true : false)
+const computedCheapNormals = computed(() => isMobile ? 1 : 0)
+const isOpen = ref(location.value.hostname === 'localhost')//debug modal
+
 //fetch api data
 const url = computed(() => {
 	return 'https://weatherapi-com.p.rapidapi.com/current.json?q='+props.latitude+','+props.longitude
@@ -105,29 +104,26 @@ const options: object = {
 	// immediate: false,
 	watch: false
 }
-// test weather check
 const { data, pending, error, refresh } = await useFetch<WeatherData>(url, options)
 const isDay = ref(data.value?.current.is_day === 1 ? true : false) // [0,1]
 const hrs = ref()
-const lastUpdated = ref(new Date())
-const timeAgo = useTimeAgo(lastUpdated.value)
-console.log(lastUpdated)
-const refreshing = ref(false)
+const now = ref(new Date())
+const timeAgo = useTimeAgo(now)
+//TODO: size?, format?, something or fix this!
+const $img = useImage()
+const photo = $img(props.texture, { format: 'webp' })
+
 const refreshAll = async () => {
-	refreshing.value = true
+	console.log("Refetching...")	
 	try {
 		await refreshNuxtData()
 	} finally {
-		refreshing.value = false
+		now.value = new Date()
 		updateUniforms()
 		isDay.value = data.value?.current.is_day === 1 ? true : false
 		hrs.value = new Date(data.value?.location.localtime as string).getHours()
 	}
 }
-
-//TODO: size?, format?, something or fix this!
-const $img = useImage()
-const photo = $img(props.texture, { format: 'webp' })
 
 function thunderLevel(code: any) {
 	const codeNumber = typeof code === "number" ? code : parseInt(code)
@@ -137,12 +133,6 @@ function thunderLevel(code: any) {
 
 function updateHours() {
 	hrs.value = new Date(data.value?.location.localtime as string).getHours()
-}
-
-function minutesDiff(dateTimeValue2: Date, dateTimeValue1: Date) {
-	 var differenceValue =(dateTimeValue2.getTime() - dateTimeValue1.getTime()) / 1000
-	 differenceValue /= 60
-	 return Math.abs(Math.round(differenceValue))
 }
 
 function updateUniforms() {
@@ -158,21 +148,6 @@ function updateUniforms() {
 		sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
 	}
 }
-const computedCheapNormals = computed(() => isMobile ? 1 : 0)
-
-function setCondition(code: any) {
-	const codeNumber = typeof code === "number"? code : parseInt(code)
-	const matchedCondition = thunderLevels.find((item) => item.code === codeNumber)
-	return matchedCondition?.text as string
-}
-
-const setIcon = computed(() => {
-	const code: any = data.value?.current.condition.code
-	const codeNumber = typeof code === "number"? code : parseInt(code)
-	const matchedCondition = thunderLevels.find((item) => item.code === codeNumber)
-	const dayOrNight = data.value?.current.is_day ? "day/" : "night/"
-	return "/images/weather/64x64/" + dayOrNight + matchedCondition?.icon + ".png"
-})
 
 onMounted(() => {
 	const iwidth: any = document.getElementById("imgPlaceholder") ? document.getElementById("imgPlaceholder")?.clientWidth : 10
@@ -191,12 +166,11 @@ onMounted(() => {
 	// weather
 	updateHours()
 	updateUniforms()
-	heroLoading.value = false
 })
 
 //Listeners / set uniforms
 watchDeep(data, () => { updateUniforms() })
-
+watch(timeAgo, () => { timeAgo.value === "1 minute ago" ? refreshAll() : null })
 watch([canvaswidth, canvasheight], () => { sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) })
 //TODO: Debug listeners (avoid on production):
 watch([hrs, cheapNormals, isDay], () => {
@@ -204,7 +178,6 @@ watch([hrs, cheapNormals, isDay], () => {
 	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
 	if(data.value) {data.value.current.is_day = isDay.value ? 1 : 0}
 })
-watch([lastUpdated], () => { minutesDiff(lastUpdated.value, new Date()) > 1 ? console.log("Refreshing...") : null })
 //end debug listeners
 </script>
 
@@ -258,7 +231,7 @@ watch([lastUpdated], () => { minutesDiff(lastUpdated.value, new Date()) > 1 ? co
 						variant="soft" :ui="{ padding: 'p-2' }">
 						<template #description>
 							<div class="flex flex-col text-xs space-y-2">
-								<span>{{ lastUpdated }}</span>
+								<span>{{ now }}</span>
 								<span>{{ timeAgo }}</span>
 							</div>
 						</template>
@@ -278,32 +251,7 @@ watch([lastUpdated], () => { minutesDiff(lastUpdated.value, new Date()) > 1 ? co
 		</UModal>
 	</div>
 	
-	<!-- Weather Pill -->
-	<Transition>
-		<div class="absolute bottom-20 flex items-end justify-center w-full">
-			<UBadge
-				v-show="!error && !pending"
-				:color="data?.current.is_day ? 'amber' : 'indigo'"
-				variant="soft"
-				size="md"
-				:ui="{ rounded: 'rounded-full', size: { md: 'text-2xl whitespace-nowrap' } }"
-			>
-				<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
-					<img :src="setIcon" />
-				</UTooltip>
-				<span class="flex items-center pr-4"><UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C</span>
-				<span class="flex items-center pr-2"><UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm</span>
-			</UBadge>
-
-			<UBadge v-show="error" color="red" size="lg">
-				<div class="flex items-center space-x-2">
-					<UIcon name="i-mdi-alert-circle-outline" />
-					<span>Could not load weather data</span>
-				</div>
-			</UBadge>
-		</div>
-	</Transition>
-	<!-- Weather Pill -->
+	<WeatherPill :data="data" :error="error" :pending="pending" />
 
 </template>
 
