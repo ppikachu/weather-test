@@ -170,7 +170,7 @@ onMounted(() => {
 
 //Listeners / set uniforms
 watchDeep(data, () => { updateUniforms() })
-watch(timeAgo, () => { timeAgo.value === "1 minute ago" ? refreshAll() : null })
+watch(timeAgo, () => { timeAgo.value !== "just now" ? refreshAll() : null })
 watch([canvaswidth, canvasheight], () => { sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) })
 //TODO: Debug listeners (avoid on production):
 watch([hrs, cheapNormals, isDay], () => {
@@ -227,7 +227,7 @@ watch([hrs, cheapNormals, isDay], () => {
 						<URange v-model="hrs" size="sm" :min="0" :max="24" />
 					</UFormGroup>
 
-					<UAlert v-if="location.hostname === 'localhost'" title="Debug" icon="i-mdi-alert-circle-outline" color="yellow"
+					<UAlert title="Debug" icon="i-mdi-alert-circle-outline" color="yellow"
 						variant="soft" :ui="{ padding: 'p-2' }">
 						<template #description>
 							<div class="flex flex-col text-xs space-y-2">
