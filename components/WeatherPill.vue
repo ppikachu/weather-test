@@ -3,14 +3,17 @@
 		<Transition>
 			<div class="absolute bottom-20 flex items-end justify-center w-full">
 				<UBadge v-show="!error && !pending" :color="data.current.is_day ? 'amber' : 'indigo'" variant="soft" size="md"
-					:ui="{ rounded: 'rounded-full', size: { md: 'text-2xl whitespace-nowrap' } }">
+					:ui="{ rounded: 'rounded-full', size: { md: 'text-xl whitespace-nowrap' } }">
 					<UTooltip :text="setCondition(data.current.condition.code)" class="flex-shrink-0">
 						<img :src="setIcon" />
 					</UTooltip>
 					<span class="flex items-center pr-4">
 						<UIcon name="i-mdi-thermometer" />{{ data.current.temp_c }} °C
 					</span>
-					<span class="flex items-center pr-2">
+					<span class="flex items-center pr-4">
+						<UIcon name="i-mdi-water-percent" />{{ data.current.humidity }} %
+					</span>
+					<span v-if="data.current.precip_mm > 0" class="flex items-center pr-2">
 						<UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data.current.precip_mm }} mm
 					</span>
 				</UBadge>
