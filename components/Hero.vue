@@ -135,7 +135,7 @@ function updateUniforms() {
 	if (data.value) {
 		const { current } = data.value
 		const { temp_c, humidity, precip_mm, condition } = current
-		sandbox.value.setUniform("u_resolution", [window.innerWidth, window.innerHeight]) // canvas resolution
+		sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) // canvas resolution
 		sandbox.value.setUniform("hrs", hrs.value)
 		sandbox.value.setUniform("thunder", thunderLevel(condition.code))
 		sandbox.value.setUniform("temp_c", temp_c)
@@ -150,8 +150,8 @@ onMounted(() => {
 	shader.value = resolveLygia(rainFragment)
 	// @ts-ignore this is a //HACK. glslCanvas is loaded in the head html
 	sandbox.value = new GlslCanvas(heroCanvas.value)
-	heroCanvas.value.width = window.innerWidth
-	heroCanvas.value.height = window.innerHeight
+	// heroCanvas.value.width = canvaswidth.value
+	// heroCanvas.value.height = canvasheight.value
 	// Load resolved shader
 	sandbox.value.load(shader.value)
 	// Load a new texture and assign it to uniform sampler2D u_texture
