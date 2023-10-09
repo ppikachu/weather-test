@@ -37,37 +37,10 @@ useHead({
 			type: 'image/png',
 			href: '/pwa-64x64.png'
 		}
-	]
+	],
 })
-
-const { coords, error, resume, pause } = useGeolocation()
-const location = useBrowserLocation()
-const fps = useFps()
-const focused = useWindowFocus()
 </script>
 
 <template>
-	<div>
-		<VitePwaManifest />
-		<NuxtLoadingIndicator />
-		
-		<section class="absolute top-2 left-2 z-20">
-			<UBadge v-if="location.hostname === 'localhost'"
-				title="debug"
-				variant="soft"
-			>
-				<div class="text-xs flex flex-col">
-					<span>FPS: {{ fps }}</span>
-					<span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span>
-					<span>focused: {{ focused }}</span>
-				</div>
-			</UBadge>
-		</section>
-
-		<Hero
-			:latitude="coords.latitude !== Infinity ? coords.latitude : -34.58"
-			:longitude="coords.longitude !== Infinity ? coords.longitude : -58.4"
-		/>
-
-	</div>
+	<Hero />
 </template>
