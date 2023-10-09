@@ -113,6 +113,7 @@ const refreshAll = async () => {
 	try {
 		await refreshNuxtData()
 	} finally {
+		// weather
 		now.value = new Date()
 		updateUniforms()
 		isDay.value = data.value?.current.is_day === 1 ? true : false
@@ -149,11 +150,12 @@ onMounted(() => {
 	shader.value = resolveLygia(rainFragment)
 	// @ts-ignore this is a //HACK. glslCanvas is loaded in the head html
 	sandbox.value = new GlslCanvas(heroCanvas.value)
+	heroCanvas.value.width = canvaswidth.value
+	heroCanvas.value.height = canvasheight.value
 	// Load resolved shader
 	sandbox.value.load(shader.value)
 	// Load a new texture and assign it to uniform sampler2D u_texture
 	sandbox.value.setUniform("u_tex0", photo)
-	// weather
 	updateHours()
 })
 
