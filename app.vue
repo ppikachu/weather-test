@@ -42,5 +42,6 @@ useHead({
 </script>
 
 <template>
+	<VitePwaManifest />
 	<Hero />
 </template>

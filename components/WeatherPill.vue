@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<Transition>
-			<div class="absolute bottom-20 flex items-end justify-center w-full">
+			<div class="absolute bottom-20 flex items-end justify-center w-full select-none">
 				<UBadge v-show="!error && !pending" :color="data.current.is_day ? 'amber' : 'indigo'" variant="soft" size="md"
 					:ui="{ rounded: 'rounded-full', size: { md: 'text-xl whitespace-nowrap' } }">
 					<UTooltip :text="setCondition(data.current.condition.code)" class="flex-shrink-0">

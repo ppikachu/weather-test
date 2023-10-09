@@ -108,6 +108,17 @@ const options: object = {
 const { data, pending, error } = await useFetch<WeatherData>(url, options)
 const isDay = ref(data.value?.current.is_day === 1 ? true : false) // [0,1]
 
+function thunderLevel(code: any) {
+	const codeNumber = typeof code === "number" ? code : parseInt(code)
+	const thunderLevel = thunderLevels.find((item) => item.code === codeNumber)
+	return thunderLevel?.thlevel
+}
+
+function updateHours() {
+	isDay.value = data.value?.current.is_day === 1 ? true : false
+	hrs.value = new Date(data.value?.location.localtime as string).getHours()
+}
+
 const refreshAll = async () => {
 	console.log("Refetching...")
 	try {
@@ -116,26 +127,16 @@ const refreshAll = async () => {
 		// weather
 		now.value = new Date()
 		updateUniforms()
-		isDay.value = data.value?.current.is_day === 1 ? true : false
-		hrs.value = new Date(data.value?.location.localtime as string).getHours()
+		updateHours()
 	}
-}
-
-function thunderLevel(code: any) {
-	const codeNumber = typeof code === "number" ? code : parseInt(code)
-	const thunderLevel = thunderLevels.find((item) => item.code === codeNumber)
-	return thunderLevel?.thlevel
-}
-
-function updateHours() {
-	hrs.value = new Date(data.value?.location.localtime as string).getHours()
 }
 
 function updateUniforms() {
 	if (data.value) {
 		const { current } = data.value
 		const { temp_c, humidity, precip_mm, condition } = current
-		sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) // canvas resolution
+		// canvas resolution
+		// fixUniformDimensions() 
 		sandbox.value.setUniform("hrs", hrs.value)
 		sandbox.value.setUniform("thunder", thunderLevel(condition.code))
 		sandbox.value.setUniform("temp_c", temp_c)
@@ -150,44 +151,49 @@ onMounted(() => {
 	shader.value = resolveLygia(rainFragment)
 	// @ts-ignore this is a //HACK. glslCanvas is loaded in the head html
 	sandbox.value = new GlslCanvas(heroCanvas.value)
-	// heroCanvas.value.width = canvaswidth.value
-	// heroCanvas.value.height = canvasheight.value
 	// Load resolved shader
 	sandbox.value.load(shader.value)
 	// Load a new texture and assign it to uniform sampler2D u_texture
 	sandbox.value.setUniform("u_tex0", photo)
+	heroCanvas.value.width = canvaswidth.value
+	heroCanvas.value.height = canvasheight.value
 	updateHours()
 })
 
-//Listeners / set uniforms
+// #region Listeners / set uniforms
 watchOnce(coords, () => {
 	if (coords.value.latitude !== Infinity) {
 		refreshAll()
 	}
 })
-watchDeep(data, () => { updateUniforms() })
+
+watchDeep(data, () => updateUniforms())
+
 watch(timeAgo, () => { timeAgo.value !== "just now" ? refreshAll() : null })
-watch([canvaswidth, canvasheight], () => { sandbox.value.setUniform("u_resolution", [canvaswidth, canvasheight]) })
+
 //TODO: Debug listeners (avoid on production):
 watch([hrs, cheapNormals, isDay], () => {
 	sandbox.value.setUniform("hrs", hrs.value)
 	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
 	if (data.value) { data.value.current.is_day = isDay.value ? 1 : 0 }
 })
-//end debug listeners
+// #endregion debug listeners
 </script>
 
 <template>
-	<VitePwaManifest />
-	<canvas ref="heroCanvas" class="absolute" :width="canvaswidth" :height="canvasheight" />
 
-	<div id="divPortada" class="relative hero-area">
-		<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
+	<canvas ref="heroCanvas" class="fixed" />
+
+	<WeatherPill v-if="data" :data="data" :error="error" :pending="pending" />
+
+	<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
+
+	<div class="hero-area">
 		<UModal v-model="isOpen" :overlay="false">
 			<UCard v-if="data">
 				<div class="space-y-4">
 
-					<div class="flex space-x-8 justify-between">
+					<section id="user-settings" class="flex space-x-8 justify-between">
 						<UFormGroup :label="$t('locale')">
 							<LocaleSelect />
 						</UFormGroup>
@@ -197,37 +203,39 @@ watch([hrs, cheapNormals, isDay], () => {
 						<UFormGroup :label="$t('night_day')">
 							<UToggle v-model="isDay" />
 						</UFormGroup>
-					</div>
+					</section>
 
 					<h1 class="text-lg">
 						{{ data.location.name }}
 						<UButton :disabled="pending" @click="refreshAll" color="green" :label="$t('update')" variant="soft"
 							icon="i-mdi-refresh" size="2xs" class="w-min" />
 					</h1>
-					<UFormGroup :label="$t('condition')">
-						<USelect v-model="data.current.condition.code" :options="thunderLevels" value-attribute="code"
-							option-attribute="text" size="sm" />
-					</UFormGroup>
-					<UFormGroup :label="$t('temperature') + ': ' + data.current.temp_c + '°C'">
-						<URange v-model="data.current.temp_c" size="sm" :min="0" :max="40" />
-					</UFormGroup>
-					<UFormGroup :label="$t('precipitation') + ': ' + data.current.precip_mm + ' mm'">
-						<URange v-model="data.current.precip_mm" size="sm" :min="0" :max="20" />
-					</UFormGroup>
-					<UFormGroup :label="$t('humidity') + ': ' + data.current.humidity + '%'">
-						<URange v-model="data.current.humidity" size="sm" :min="0" :max="100" />
-					</UFormGroup>
-					<UFormGroup :label="$t('time') + ': ' + hrs + ':00'">
-						<URange v-model="hrs" size="sm" :min="0" :max="24" />
-					</UFormGroup>
 
-					<UAlert title="Debug" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft"
-						:ui="{ padding: 'p-2' }">
+					<section id="weather-settings" class="space-y-4">
+						<UFormGroup :label="$t('condition')">
+							<USelect v-model="data.current.condition.code" :options="thunderLevels" value-attribute="code"
+								option-attribute="text" size="sm" />
+						</UFormGroup>
+						<UFormGroup :label="$t('temperature') + ': ' + data.current.temp_c + '°C'">
+							<URange v-model="data.current.temp_c" size="sm" :min="0" :max="40" />
+						</UFormGroup>
+						<UFormGroup :label="$t('precipitation') + ': ' + data.current.precip_mm + ' mm'">
+							<URange v-model="data.current.precip_mm" size="sm" :min="0" :max="20" />
+						</UFormGroup>
+						<UFormGroup :label="$t('humidity') + ': ' + data.current.humidity + '%'">
+							<URange v-model="data.current.humidity" size="sm" :min="0" :max="100" />
+						</UFormGroup>
+						<UFormGroup :label="$t('time') + ': ' + hrs + ':00'">
+							<URange v-model="hrs" size="sm" :min="0" :max="24" />
+						</UFormGroup>
+					</section>
+
+					<UAlert title="Debug" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft" :ui="{ padding: 'p-2' }">
 						<template #description>
 							<div class="flex flex-col text-xs space-y-2">
 								<span>{{ now }}</span>
-								<span>{{ timeAgo }}</span>
 								<span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span>
+								<span>useWindowSize: {{ canvaswidth }}, {{ canvasheight }}</span>
 								<span>FPS: {{ fps }}</span>
 							</div>
 						</template>
@@ -235,26 +243,25 @@ watch([hrs, cheapNormals, isDay], () => {
 
 				</div>
 				<template #footer>
-					<div class="flex flex-col space-y-2 items-center justify-center text-sm text-gray-500">
+					<div class="flex flex-col space-y-2 items-center text-sm text-gray-500">
+
 						<div>
 							<span>{{ $t('dismiss_modal') }}</span>
-							<span v-if="!isMobile">{{ $t('or_press') }}
-								<UKbd value="Esc" />
-							</span>
+							<span v-if="!isMobile">{{ $t('or_press') }} <UKbd value="Esc" /></span>
 						</div>
-						<span>{{ $t('powered_by') }}<a href="https://www.weatherapi.com/" target="_blank"
-								title="Free Weather API">WeatherAPI.com</a> {{ timeAgo }}</span>
+
+						<span>{{ $t('powered_by') }}<a href="https://www.weatherapi.com/" target="_blank" title="Free Weather API">WeatherAPI.com</a> {{ timeAgo }}</span>
+
 					</div>
 				</template>
 			</UCard>
 		</UModal>
 	</div>
 
-	<WeatherPill v-if="data" :data="data" :error="error" :pending="pending" />
 </template>
 
-<style scoped>
-.hero-area {
+<style>
+.hero-area, #__nuxt, html, canvas {
 	height: 100dvh;
 	width: 100%;
 }
