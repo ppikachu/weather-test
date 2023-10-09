@@ -2,26 +2,26 @@
 	<div>
 		<Transition>
 			<div class="absolute bottom-20 flex items-end justify-center w-full select-none">
-				<UBadge v-show="!error && !pending" :color="data.current.is_day ? 'amber' : 'indigo'" variant="soft" size="md"
+				<UBadge v-show="!error && !pending" :color="data?.current.is_day ? 'amber' : 'indigo'" variant="soft" size="md"
 					:ui="{ rounded: 'rounded-full', size: { md: 'text-xl whitespace-nowrap' } }">
-					<UTooltip :text="setCondition(data.current.condition.code)" class="flex-shrink-0">
+					<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
 						<img :src="setIcon" />
 					</UTooltip>
 					<span class="flex items-center pr-4">
-						<UIcon name="i-mdi-thermometer" />{{ data.current.temp_c }} °C
+						<UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C
 					</span>
 					<span class="flex items-center pr-4">
-						<UIcon name="i-mdi-water-percent" />{{ data.current.humidity }} %
+						<UIcon name="i-mdi-water-percent" />{{ data?.current.humidity }} %
 					</span>
-					<span v-if="data.current.precip_mm > 0" class="flex items-center pr-2">
-						<UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data.current.precip_mm }} mm
+					<span v-if="data?.current.precip_mm && data?.current.precip_mm > 0" class="flex items-center pr-2">
+						<UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm
 					</span>
 				</UBadge>
 
 				<UBadge v-show="props.error" color="red" size="lg">
-					<div class="flex items-center space-x-2">
-						<UIcon name="i-mdi-alert-circle-outline" />
-						<span>Could not load weather data</span>
+					<div class="flex items-center space-x-2 text-xl">
+						<UIcon name="i-mdi-alert-circle-outline" class="w-8 h-8" />
+						<span>{{ $t('api_error') }}</span>
 					</div>
 				</UBadge>
 			</div>
@@ -32,7 +32,7 @@
 <script lang="ts" setup>
 /* Define props */
 const props = defineProps({
-	data: { type: Object as PropType<WeatherData>, default: '' },
+	data: { type: Object as PropType<WeatherData>, required: false },
 	error: { type: Boolean, default: false },
 	pending: { type: Boolean, default: true }
 })
@@ -95,10 +95,10 @@ function setCondition(code: any) {
 }
 
 const setIcon = computed(() => {
-	const code: any = props.data.current.condition.code
+	const code: any = props.data?.current.condition.code
 	const codeNumber = typeof code === "number"? code : parseInt(code)
 	const matchedCondition = thunderLevels.find((item) => item.code === codeNumber)
-	const dayOrNight = props.data.current.is_day ? "day/" : "night/"
+	const dayOrNight = props.data?.current.is_day ? "day/" : "night/"
 	return "/images/weather/64x64/" + dayOrNight + matchedCondition?.icon + ".png"
 })
 </script>

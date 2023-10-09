@@ -9,8 +9,8 @@ const { isMobile } = useDevice()
 const location = useBrowserLocation()
 const { width: canvaswidth, height: canvasheight } = useWindowSize()
 
+//TODO: use package or minified js
 useHead({
-	//TODO: use package or minified js
 	script: [{
 		type: 'text/javascript',
 		src: 'https://rawgit.com/patriciogonzalezvivo/glslCanvas/master/dist/GlslCanvas.js',
@@ -29,12 +29,11 @@ const props: Props = defineProps({
 const heroCanvas = ref()
 const sandbox = ref()
 const shader = ref()
-const cheapNormals = ref(isMobile ? true : false)
-const computedCheapNormals = computed(() => isMobile ? 1 : 0)
+const HDNormals = ref(isMobile ? false : true)
+const computedCheapNormals = computed(() => isMobile ? 0 : 1)
 const isOpen = ref(location.value.hostname === 'localhost')//debug modal
 const { coords, error: coordsError, resume, pause } = useGeolocation()
 const fps = useFps()
-const hrs = ref()
 const now = ref(new Date())
 const timeAgo = useTimeAgo(now)
 //TODO: size?, format?, something or fix this!
@@ -94,6 +93,7 @@ const thunderLevels = [
 //fetch api data
 const url = computed(() => {
 	return 'https://weatherapi-com.p.rapidapi.com/current.json?q=' + coords.value.latitude + ',' + coords.value.longitude
+	// return 'https://weatherapi-cosm.p.rapippp.com/current.json' //test bad request
 })
 const options: object = {
 	method: 'GET',
@@ -106,7 +106,11 @@ const options: object = {
 	watch: false
 }
 const { data, pending, error } = await useFetch<WeatherData>(url, options)
-const isDay = ref(data.value?.current.is_day === 1 ? true : false) // [0,1]
+
+const isDayAndHrs = ref({
+	isDay: data.value?.current.is_day === 1 ? true : false,
+	hrs: 0
+})
 
 function thunderLevel(code: any) {
 	const codeNumber = typeof code === "number" ? code : parseInt(code)
@@ -115,11 +119,16 @@ function thunderLevel(code: any) {
 }
 
 function updateHours() {
-	isDay.value = data.value?.current.is_day === 1 ? true : false
-	hrs.value = new Date(data.value?.location.localtime as string).getHours()
+	isDayAndHrs.value.isDay = data.value?.current.is_day === 1 ? true : false
+	isDayAndHrs.value.hrs = new Date(data.value?.location.localtime as string).getHours()
 }
 
-const refreshAll = async () => {
+/**
+ * Refresh all data and update the weather display.
+ *
+ * @return {Promise<void>} A promise that resolves when the data has been refreshed.
+ */
+const refreshAll = async (): Promise<void> => {
 	console.log("Refetching...")
 	try {
 		await refreshNuxtData()
@@ -131,13 +140,12 @@ const refreshAll = async () => {
 	}
 }
 
-function updateUniforms() {
+/* Updates the uniforms for the shader program. */
+function updateUniforms(): void {
 	if (data.value) {
 		const { current } = data.value
-		const { temp_c, humidity, precip_mm, condition } = current
-		// canvas resolution
-		// fixUniformDimensions() 
-		sandbox.value.setUniform("hrs", hrs.value)
+		const { temp_c = 0, humidity = 0, precip_mm = 0, condition = {text: "offline", icon: "", code: 0} } = current
+		sandbox.value.setUniform("hrs", isDayAndHrs.value.hrs)
 		sandbox.value.setUniform("thunder", thunderLevel(condition.code))
 		sandbox.value.setUniform("temp_c", temp_c)
 		sandbox.value.setUniform("precip_mm", precip_mm)
@@ -155,6 +163,7 @@ onMounted(() => {
 	sandbox.value.load(shader.value)
 	// Load a new texture and assign it to uniform sampler2D u_texture
 	sandbox.value.setUniform("u_tex0", photo)
+	// resize canvas
 	heroCanvas.value.width = canvaswidth.value
 	heroCanvas.value.height = canvasheight.value
 	updateHours()
@@ -162,20 +171,18 @@ onMounted(() => {
 
 // #region Listeners / set uniforms
 watchOnce(coords, () => {
-	if (coords.value.latitude !== Infinity) {
-		refreshAll()
-	}
+	if (coords.value.latitude !== Infinity) refreshAll()
 })
 
 watchDeep(data, () => updateUniforms())
 
-watch(timeAgo, () => { timeAgo.value !== "just now" ? refreshAll() : null })
+watch(timeAgo, () => timeAgo.value !== "just now" ? refreshAll() : null )
 
 //TODO: Debug listeners (avoid on production):
-watch([hrs, cheapNormals, isDay], () => {
-	sandbox.value.setUniform("hrs", hrs.value)
-	sandbox.value.setUniform("cheap_normals", cheapNormals.value ? 1 : 0)
-	if (data.value) { data.value.current.is_day = isDay.value ? 1 : 0 }
+watch([isDayAndHrs.value, HDNormals], () => {
+	sandbox.value.setUniform("hrs", isDayAndHrs.value.hrs)
+	sandbox.value.setUniform("cheap_normals", HDNormals.value ? 1 : 0)
+	if (data.value) { data.value.current.is_day = isDayAndHrs.value.isDay ? 1 : 0 }
 })
 // #endregion debug listeners
 </script>
@@ -184,13 +191,15 @@ watch([hrs, cheapNormals, isDay], () => {
 
 	<canvas ref="heroCanvas" class="fixed" />
 
-	<WeatherPill v-if="data" :data="data" :error="error" :pending="pending" />
+	<Transition>
+		<WeatherPill v-if="data || error" :data="data" :error="error" :pending="pending" />
+	</Transition>
 
 	<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
 
-	<div class="hero-area">
+	<div class="modal-area">
 		<UModal v-model="isOpen" :overlay="false">
-			<UCard v-if="data">
+			<UCard>
 				<div class="space-y-4">
 
 					<section id="user-settings" class="flex space-x-8 justify-between">
@@ -198,23 +207,34 @@ watch([hrs, cheapNormals, isDay], () => {
 							<LocaleSelect />
 						</UFormGroup>
 						<UFormGroup :label="$t('cheap_normals')">
-							<UToggle v-model="cheapNormals" />
-						</UFormGroup>
-						<UFormGroup :label="$t('night_day')">
-							<UToggle v-model="isDay" />
+							<UToggle v-model="HDNormals" />
 						</UFormGroup>
 					</section>
 
 					<h1 class="text-lg">
-						{{ data.location.name }}
-						<UButton :disabled="pending" @click="refreshAll" color="green" :label="$t('update')" variant="soft"
-							icon="i-mdi-refresh" size="2xs" class="w-min" />
+						{{ data?.location.name ? data.location.name : $t('no_network') }}
+						<UButton
+							:disabled="pending"
+							@click="refreshAll"
+							:color="data ? 'gray' : 'red'" :label="$t('update')"
+							icon="i-mdi-refresh"
+							size="2xs"
+							variant="outline"
+						/>
 					</h1>
-
-					<section id="weather-settings" class="space-y-4">
+					
+					<section v-if="data" id="weather-settings" class="space-y-4">						
 						<UFormGroup :label="$t('condition')">
-							<USelect v-model="data.current.condition.code" :options="thunderLevels" value-attribute="code"
-								option-attribute="text" size="sm" />
+							<USelect
+								v-model="data.current.condition.code"
+								:options="thunderLevels"
+								value-attribute="code"
+								option-attribute="text"
+								size="sm"
+							/>
+						</UFormGroup>
+						<UFormGroup :label="$t('night_day')">
+							<UToggle v-model="isDayAndHrs.isDay" />
 						</UFormGroup>
 						<UFormGroup :label="$t('temperature') + ': ' + data.current.temp_c + '°C'">
 							<URange v-model="data.current.temp_c" size="sm" :min="0" :max="40" />
@@ -225,17 +245,16 @@ watch([hrs, cheapNormals, isDay], () => {
 						<UFormGroup :label="$t('humidity') + ': ' + data.current.humidity + '%'">
 							<URange v-model="data.current.humidity" size="sm" :min="0" :max="100" />
 						</UFormGroup>
-						<UFormGroup :label="$t('time') + ': ' + hrs + ':00'">
-							<URange v-model="hrs" size="sm" :min="0" :max="24" />
+						<UFormGroup :label="$t('time') + ': ' + isDayAndHrs.hrs + ':00'">
+							<URange v-model="isDayAndHrs.hrs" size="sm" :min="0" :max="24" />
 						</UFormGroup>
 					</section>
 
-					<UAlert title="Debug" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft" :ui="{ padding: 'p-2' }">
+					<UAlert title="Debug" v-if="location.hostname === 'localhost'" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft" :ui="{ padding: 'p-2' }">
 						<template #description>
 							<div class="flex flex-col text-xs space-y-2">
 								<span>{{ now }}</span>
 								<span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span>
-								<span>useWindowSize: {{ canvaswidth }}, {{ canvasheight }}</span>
 								<span>FPS: {{ fps }}</span>
 							</div>
 						</template>
@@ -261,7 +280,7 @@ watch([hrs, cheapNormals, isDay], () => {
 </template>
 
 <style>
-.hero-area, #__nuxt, html, canvas {
+.modal-area, #__nuxt, html, canvas {
 	height: 100dvh;
 	width: 100%;
 }

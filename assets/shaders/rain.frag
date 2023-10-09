@@ -147,7 +147,7 @@ void main() {
 
 	vec2 normal = vec2(.0);
 	// cheap normals (3x cheaper, but 2 times shittier ;))
-	if (cheap_normals) {
+	if (!cheap_normals) {
 		normal = vec2(dFdx(c.x), dFdy(c.x));
 	}
 	// expensive normals
@@ -218,9 +218,9 @@ void main() {
 	// til here!
 
 	// debug:
- 	vec2 debug_pos = vec2(-.5, -.5);
-	col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.05), u_resolution.x);
-	col += digits(v_texcoord_aspect + debug_pos, u_resolution.y);
+ 	// vec2 debug_pos = vec2(-.5, -.5);
+	// col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.05), u_resolution.x);
+	// col += digits(v_texcoord_aspect + debug_pos, u_resolution.y);
 
 	// if (cheap_normals) {
 	// 	col += digits(v_texcoord_aspect + debug_pos, 1.);
