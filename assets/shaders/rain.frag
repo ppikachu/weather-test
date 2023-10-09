@@ -218,7 +218,10 @@ void main() {
 	// til here!
 
 	// debug:
- 	// vec2 debug_pos = vec2(-.5, -.2);
+ 	vec2 debug_pos = vec2(-.5, -.5);
+	col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.05), u_resolution.x);
+	col += digits(v_texcoord_aspect + debug_pos, u_resolution.y);
+
 	// if (cheap_normals) {
 	// 	col += digits(v_texcoord_aspect + debug_pos, 1.);
 	// }
