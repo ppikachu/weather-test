@@ -20,7 +20,7 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform sampler2D u_tex0;
-uniform bool cheap_normals;
+uniform bool hd_normals;
 uniform vec2 u_tex0Resolution;
 uniform float u_time;
 uniform float thunder;
@@ -32,7 +32,7 @@ uniform float humidity;
 // #define DIGITS_SIZE vec2(.05, .06)
 #define BOXBLUR_2D
 #define BOXBLUR_ITERATIONS 4
-// #define cheap_normals
+// #define hd_normals
 #include "lygia/filter/boxBlur.glsl"
 // #define GAUSSIANBLUR_2D
 // #include "lygia/filter/gaussianBlur.glsl"
@@ -147,7 +147,7 @@ void main() {
 
 	vec2 normal = vec2(.0);
 	// cheap normals (3x cheaper, but 2 times shittier ;))
-	if (!cheap_normals) {
+	if (!hd_normals) {
 		normal = vec2(dFdx(c.x), dFdy(c.x));
 	}
 	// expensive normals
@@ -222,7 +222,7 @@ void main() {
 	// col += digits(v_texcoord_aspect + debug_pos + vec2(0., -.05), u_resolution.x);
 	// col += digits(v_texcoord_aspect + debug_pos, u_resolution.y);
 
-	// if (cheap_normals) {
+	// if (hd_normals) {
 	// 	col += digits(v_texcoord_aspect + debug_pos, 1.);
 	// }
 	// col += digits(v_texcoord_aspect + debug_pos, daynightime * 24.);

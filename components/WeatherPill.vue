@@ -2,28 +2,44 @@
 	<div>
 		<Transition>
 			<div class="absolute bottom-20 flex items-end justify-center w-full select-none">
-				<UBadge v-show="!error && !pending" :color="data?.current.is_day ? 'amber' : 'indigo'" variant="soft" size="md"
-					:ui="{ rounded: 'rounded-full', size: { md: 'text-xl whitespace-nowrap' } }">
-					<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0">
-						<img :src="setIcon" />
-					</UTooltip>
-					<span class="flex items-center pr-4">
-						<UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C
-					</span>
-					<span class="flex items-center pr-4">
-						<UIcon name="i-mdi-water-percent" />{{ data?.current.humidity }} %
-					</span>
-					<span v-if="data?.current.precip_mm && data?.current.precip_mm > 0" class="flex items-center pr-2">
-						<UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm
-					</span>
+				<UBadge
+					:color="pillColor"
+					variant="soft"
+					size="md"
+					:ui="{ rounded: 'rounded-full', size: { md: 'whitespace-nowrap px-4' } }"
+				>
+
+					<Transition>
+						<section v-if="data" class="flex items-center text-xl">
+							<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0 -ml-3">
+								<img :src="setIcon" />
+							</UTooltip>
+							<span class="flex items-center pr-4">
+								<UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C
+							</span>
+							<span class="flex items-center pr-4">
+								<UIcon name="i-mdi-water-percent" />{{ data?.current.humidity }} %
+							</span>
+							<span v-if="data?.current.precip_mm && data?.current.precip_mm > 0" class="flex items-center pr-2">
+								<UIcon name="i-mdi-weather-pouring" />&nbsp;{{ data?.current.precip_mm }} mm
+							</span>
+						</section>
+						<section v-else class="flex items-center space-x-2">
+							<UIcon :name="props.pending ? 'i-mdi-refresh' : 'i-mdi-alert-circle-outline'" class="w-8 h-8 -ml-3" />
+							<div class="flex flex-col">
+								<TransitionGroup>
+									<span v-show="error">{{ $t('api_error') }}</span>
+									<span v-show="coords?.latitude !== Infinity" :class="props.pending ? 'text-amber-500' : 'text-red-500'">{{ props.pending ? $t('pending') : $t('no_network') }}</span>
+									<span v-show="coords?.latitude === Infinity">{{ location_error ? $t('no_location') : $t('locating') }}</span>
+								</TransitionGroup>
+							</div>
+						</section>
+					</Transition>
+
 				</UBadge>
 
-				<UBadge v-show="props.error" color="red" size="lg">
-					<div class="flex items-center space-x-2 text-xl">
-						<UIcon name="i-mdi-alert-circle-outline" class="w-8 h-8" />
-						<span>{{ $t('api_error') }}</span>
-					</div>
-				</UBadge>
+				<!-- <UBadge v-show="props.error" color="red" size="lg">
+				</UBadge> -->
 			</div>
 		</Transition>
 	</div>
@@ -32,6 +48,8 @@
 <script lang="ts" setup>
 /* Define props */
 const props = defineProps({
+	coords: { type: Object, required: false },
+	location_error: { type: String },
 	data: { type: Object as PropType<WeatherData>, required: false },
 	error: { type: Boolean, default: false },
 	pending: { type: Boolean, default: true }
@@ -87,6 +105,18 @@ const thunderLevels = [
 	{ code: 1279, thlevel: 0.25, text: "Patchy light snow with thunder", icon: "392" },
 	{ code: 1282, thlevel: 0.50, text: "Moderate or heavy snow with thunder", icon: "395" },
 ]
+
+const pillColor = computed(() => {
+	if (props.data) {
+		return props.data.current.is_day ? 'amber' : 'indigo'
+	}
+	if (props.pending) {
+		return 'amber'
+	}
+	if (props.error) {
+		return 'red'
+	}
+})
 
 function setCondition(code: any) {
 	const codeNumber = typeof code === "number"? code : parseInt(code)

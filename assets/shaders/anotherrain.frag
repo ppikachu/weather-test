@@ -6,7 +6,7 @@
 //
 
 #define S(a, b, t) smoothstep(a, b, t)
-#define CHEAP_NORMALS
+#define hd_normals
 
 vec3 N13(float p) {
  //  from DAVE HOSKINS
@@ -121,7 +121,7 @@ void mainDrops( out vec4 fragColor, in vec2 fragCoord )
   float layer1 = S(.25, .75, rainAmount);
   float layer2 = S(.0, .5, rainAmount);
   
-  #ifdef CHEAP_NORMALS
+  #ifdef hd_normals
     vec2 n = vec2(dFdx(c.x), dFdy(c.x));// cheap normals (3x cheaper, but 2 times shittier ;))
   #else
     vec2 e = vec2(.001, 0.);

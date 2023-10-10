@@ -25,6 +25,24 @@ const props: Props = defineProps({
 	texture: { type: String, default: '/images/TimeToForest_3.png' },
 })
 
+//fetch api data
+const { coords, error: coordsError, resume, pause } = useGeolocation({ enableHighAccuracy: true, timeout: 5000 })
+const url = computed(() => {
+	return 'https://weatherapi-com.p.rapidapi.com/current.json?q=' + coords.value.latitude + ',' + coords.value.longitude
+	// return 'https://weatherapi-cosm.p.rapippp.com/current.json' //test bad request
+})
+const options: object = {
+	method: 'GET',
+	headers: {
+		'X-RapidAPI-Key': config.public.RapidAPIKey,
+		'X-RapidAPI-Host': config.public.RapidAPIHost
+	},
+	lang: 'es',
+	immediate: false,
+	watch: false
+}
+const { data, pending, error } = await useFetch<WeatherData>(url, options)
+
 // sandbox
 const heroCanvas = ref()
 const sandbox = ref()
@@ -32,10 +50,12 @@ const shader = ref()
 const HDNormals = ref(isMobile ? false : true)
 const computedCheapNormals = computed(() => isMobile ? 0 : 1)
 const isOpen = ref(location.value.hostname === 'localhost')//debug modal
-const { coords, error: coordsError, resume, pause } = useGeolocation()
+
+
 const fps = useFps()
 const now = ref(new Date())
 const timeAgo = useTimeAgo(now)
+
 //TODO: size?, format?, something or fix this!
 const $img = useImage()
 const photo = $img(props.texture, { format: 'webp' })
@@ -90,23 +110,6 @@ const thunderLevels = [
 	{ code: 1282, thlevel: 0.50, text: "Moderate or heavy snow with thunder", icon: "395" },
 ]
 
-//fetch api data
-const url = computed(() => {
-	return 'https://weatherapi-com.p.rapidapi.com/current.json?q=' + coords.value.latitude + ',' + coords.value.longitude
-	// return 'https://weatherapi-cosm.p.rapippp.com/current.json' //test bad request
-})
-const options: object = {
-	method: 'GET',
-	headers: {
-		'X-RapidAPI-Key': config.public.RapidAPIKey,
-		'X-RapidAPI-Host': config.public.RapidAPIHost
-	},
-	lang: 'es',
-	immediate: false,
-	watch: false
-}
-const { data, pending, error } = await useFetch<WeatherData>(url, options)
-
 const isDayAndHrs = ref({
 	isDay: data.value?.current.is_day === 1 ? true : false,
 	hrs: 0
@@ -150,7 +153,7 @@ function updateUniforms(): void {
 		sandbox.value.setUniform("temp_c", temp_c)
 		sandbox.value.setUniform("precip_mm", precip_mm)
 		sandbox.value.setUniform("humidity", humidity)
-		sandbox.value.setUniform("cheap_normals", computedCheapNormals.value)
+		sandbox.value.setUniform("hd_normals", computedCheapNormals.value)
 	}
 }
 
@@ -181,7 +184,7 @@ watch(timeAgo, () => timeAgo.value !== "just now" ? refreshAll() : null )
 //TODO: Debug listeners (avoid on production):
 watch([isDayAndHrs.value, HDNormals], () => {
 	sandbox.value.setUniform("hrs", isDayAndHrs.value.hrs)
-	sandbox.value.setUniform("cheap_normals", HDNormals.value ? 1 : 0)
+	sandbox.value.setUniform("hd_normals", HDNormals.value ? 1 : 0)
 	if (data.value) { data.value.current.is_day = isDayAndHrs.value.isDay ? 1 : 0 }
 })
 // #endregion debug listeners
@@ -192,7 +195,7 @@ watch([isDayAndHrs.value, HDNormals], () => {
 	<canvas ref="heroCanvas" class="fixed" />
 
 	<Transition>
-		<WeatherPill v-if="data || error" :data="data" :error="error" :pending="pending" />
+		<WeatherPill :data="data" :error="error" :pending="pending" :coords="coords" :location_error="coordsError" />
 	</Transition>
 
 	<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
@@ -200,30 +203,44 @@ watch([isDayAndHrs.value, HDNormals], () => {
 	<div class="modal-area">
 		<UModal v-model="isOpen" :overlay="false">
 			<UCard>
-				<div class="space-y-4">
+
+				<div class="space-y-4 divide-y divide-gray-700">
 
 					<section id="user-settings" class="flex space-x-8 justify-between">
+
 						<UFormGroup :label="$t('locale')">
 							<LocaleSelect />
 						</UFormGroup>
-						<UFormGroup :label="$t('cheap_normals')">
-							<UToggle v-model="HDNormals" />
+
+						<UFormGroup :label="$t('hd_normals')">
+							<UCheckbox v-model="HDNormals" />
 						</UFormGroup>
+
+						<!-- <UFormGroup :label="$t('background')">
+							<ChooseBackground />
+						</UFormGroup> -->
+
 					</section>
 
-					<h1 class="text-lg">
-						{{ data?.location.name ? data.location.name : $t('no_network') }}
-						<UButton
-							:disabled="pending"
-							@click="refreshAll"
-							:color="data ? 'gray' : 'red'" :label="$t('update')"
-							icon="i-mdi-refresh"
-							size="2xs"
-							variant="outline"
-						/>
-					</h1>
+					<section v-if="data" id="weather-settings" class="space-y-4 pt-4">						
+						<div class="flex justify-between">
+							<h1 class="text-lg">
+								{{ data?.location.name ? data.location.name : $t('no_network') }}
+								<UButton
+									:disabled="pending"
+									@click="refreshAll"
+									:color="data ? 'gray' : 'red'" :label="$t('update')"
+									icon="i-mdi-refresh"
+									size="2xs"
+									variant="outline"
+								/>
+							</h1>
+							<div class="flex items-center space-x-2 text-sm">
+								<span>{{ $t('night_day') }}</span>
+								<UToggle v-model="isDayAndHrs.isDay" />
+							</div>
+						</div>
 					
-					<section v-if="data" id="weather-settings" class="space-y-4">						
 						<UFormGroup :label="$t('condition')">
 							<USelect
 								v-model="data.current.condition.code"
@@ -232,9 +249,6 @@ watch([isDayAndHrs.value, HDNormals], () => {
 								option-attribute="text"
 								size="sm"
 							/>
-						</UFormGroup>
-						<UFormGroup :label="$t('night_day')">
-							<UToggle v-model="isDayAndHrs.isDay" />
 						</UFormGroup>
 						<UFormGroup :label="$t('temperature') + ': ' + data.current.temp_c + '°C'">
 							<URange v-model="data.current.temp_c" size="sm" :min="0" :max="40" />
@@ -248,19 +262,21 @@ watch([isDayAndHrs.value, HDNormals], () => {
 						<UFormGroup :label="$t('time') + ': ' + isDayAndHrs.hrs + ':00'">
 							<URange v-model="isDayAndHrs.hrs" size="sm" :min="0" :max="24" />
 						</UFormGroup>
+
+						<UAlert v-if="location.hostname === 'localhost'" icon="i-mdi-bug" color="yellow" variant="soft" :ui="{ padding: 'p-2' }">
+							<template #description>
+								<div class="flex flex-col text-xs space-y-2">
+									<span>{{ now }}</span>
+									<!-- <span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span> -->
+									<span>FPS: {{ fps }}</span>
+								</div>
+							</template>
+						</UAlert>
+
 					</section>
 
-					<UAlert title="Debug" v-if="location.hostname === 'localhost'" icon="i-mdi-alert-circle-outline" color="yellow" variant="soft" :ui="{ padding: 'p-2' }">
-						<template #description>
-							<div class="flex flex-col text-xs space-y-2">
-								<span>{{ now }}</span>
-								<span>useGeolocation: {{ coords.latitude }}, {{ coords.longitude }}</span>
-								<span>FPS: {{ fps }}</span>
-							</div>
-						</template>
-					</UAlert>
-
 				</div>
+
 				<template #footer>
 					<div class="flex flex-col space-y-2 items-center text-sm text-gray-500">
 
@@ -273,6 +289,7 @@ watch([isDayAndHrs.value, HDNormals], () => {
 
 					</div>
 				</template>
+
 			</UCard>
 		</UModal>
 	</div>
