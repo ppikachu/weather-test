@@ -9,10 +9,9 @@
 					:ui="{ rounded: 'rounded-full', size: { md: 'whitespace-nowrap px-4' } }"
 				>
 
-					<Transition>
 						<section v-if="data" class="flex items-center text-xl">
 							<UTooltip :text="setCondition(data?.current.condition.code)" class="flex-shrink-0 -ml-3">
-								<img :src="setIcon" />
+								<img :src="setIcon" width="64" height="64" :alt="$t('condition')" />
 							</UTooltip>
 							<span class="flex items-center pr-4">
 								<UIcon name="i-mdi-thermometer" />{{ data?.current.temp_c }} °C
@@ -34,12 +33,7 @@
 								</TransitionGroup>
 							</div>
 						</section>
-					</Transition>
-
 				</UBadge>
-
-				<!-- <UBadge v-show="props.error" color="red" size="lg">
-				</UBadge> -->
 			</div>
 		</Transition>
 	</div>
@@ -132,5 +126,3 @@ const setIcon = computed(() => {
 	return "/images/weather/64x64/" + dayOrNight + matchedCondition?.icon + ".png"
 })
 </script>
-
-
