@@ -22,7 +22,7 @@ interface Props {
 	texture: string,
 }
 const props: Props = defineProps({
-	texture: { type: String, default: '/images/TimeToForest_3.png' },
+	texture: { type: String, default: '/images/a-forest.jpg' },
 })
 
 //fetch api data
@@ -51,14 +51,14 @@ const HDNormals = ref(isMobile ? false : true)
 const computedCheapNormals = computed(() => isMobile ? 0 : 1)
 const isOpen = ref(location.value.hostname === 'localhost')//debug modal
 
-
 const fps = useFps()
 const now = ref(new Date())
 const timeAgo = useTimeAgo(now)
 
 //TODO: size?, format?, something or fix this!
-const $img = useImage()
-const photo = $img(props.texture, { format: 'webp' })
+// const $img = useImage()
+const settings = useSettings()
+const photo = settings.value
 const thunderLevels = [
 	{ code: 1000, thlevel: 0.00, text: "Clear", icon: "113" },
 	{ code: 1003, thlevel: 0.00, text: "Partly cloudy", icon: "116" },
@@ -187,6 +187,10 @@ watch([isDayAndHrs.value, HDNormals], () => {
 	sandbox.value.setUniform("hd_normals", HDNormals.value ? 1 : 0)
 	if (data.value) { data.value.current.is_day = isDayAndHrs.value.isDay ? 1 : 0 }
 })
+
+watch(settings, () => {
+	sandbox.value.setUniform("u_tex0", settings.value)
+})
 // #endregion debug listeners
 </script>
 
@@ -216,9 +220,9 @@ watch([isDayAndHrs.value, HDNormals], () => {
 							<UCheckbox v-model="HDNormals" />
 						</UFormGroup>
 
-						<!-- <UFormGroup :label="$t('background')">
+						<UFormGroup :label="$t('background')">
 							<ChooseBackground />
-						</UFormGroup> -->
+						</UFormGroup>
 
 					</section>
 
