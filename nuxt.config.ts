@@ -9,6 +9,7 @@ export default defineNuxtConfig({
 		"@nuxtjs/device",
 		"@nuxtjs/i18n",
 		"@nuxtjs/google-fonts",
+		"@pinia/nuxt",
 	],
 	runtimeConfig: {
 		public: {

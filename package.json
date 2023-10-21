@@ -11,12 +11,13 @@
     "generate-pwa-assets": "pwa-assets-generator --preset minimal public/logo.svg"
   },
   "devDependencies": {
-    "@nuxt/devtools": "1.0.0-beta.1",
-    "@nuxt/image": "1.0.0-rc.1",
+    "@nuxt/devtools": "1.0.0",
+    "@nuxt/image": "1.0.0",
     "@nuxt/ui": "^2.9.0",
     "@nuxtjs/i18n": "8.0.0-rc.5",
+    "@pinia/nuxt": "^0.5.1",
     "@vite-pwa/assets-generator": "^0.0.10",
-    "nuxt": "^3.7.4",
+    "nuxt": "^3.8.0",
     "resolve-lygia": "^1.0.4"
   },
   "dependencies": {
