@@ -26,11 +26,31 @@
 						<section v-else class="flex items-center space-x-2">
 							<UIcon :name="props.pending ? 'i-mdi-refresh' : 'i-mdi-alert-circle-outline'" class="w-8 h-8 -ml-3" />
 							<div class="flex flex-col">
+
 								<TransitionGroup>
-									<span v-show="error">{{ $t('api_error') }}</span>
-									<span v-show="coords?.latitude !== Infinity" :class="props.pending ? 'text-amber-500' : 'text-red-500'">{{ props.pending ? $t('pending') : $t('no_network') }}</span>
-									<span v-show="coords?.latitude === Infinity">{{ location_error ? $t('no_location') : $t('locating') }}</span>
+									<span
+										v-show="error"
+										key="error"
+									>
+										{{ $t('api_error') }}
+									</span>
+
+									<span
+										v-show="coords?.latitude !== Infinity"
+										key="coords"
+										:class="props.pending ? 'text-amber-500' : 'text-red-500'"
+									>
+										{{ props.pending ? $t('pending') : $t('no_network') }}
+									</span>
+
+									<span
+										v-show="coords?.latitude === Infinity"
+										key="location"
+									>
+										{{ location_error ? $t('no_location') : $t('locating') }}
+									</span>
 								</TransitionGroup>
+
 							</div>
 						</section>
 				</UBadge>

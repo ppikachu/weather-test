@@ -17,14 +17,6 @@ useHead({
 	}]
 })
 
-/* Define props */
-interface Props {
-	texture: string,
-}
-const props: Props = defineProps({
-	texture: { type: String, default: '/images/a-forest.jpg' },
-})
-
 //fetch api data
 const { coords, error: coordsError, resume, pause } = useGeolocation({ enableHighAccuracy: true, timeout: 5000 })
 const url = computed(() => {
@@ -198,9 +190,7 @@ watch(settings, () => {
 
 	<canvas ref="heroCanvas" class="fixed" />
 
-	<Transition>
-		<WeatherPill :data="data" :error="error" :pending="pending" :coords="coords" :location_error="coordsError" />
-	</Transition>
+	<WeatherPill :data="data" :error="error" :pending="pending" :coords="coords" :location_error="coordsError" />
 
 	<UButton icon="i-mdi-cog" color="amber" variant="link" @click="isOpen = true" class="absolute right-0 m-4 z-10" />
 
@@ -267,7 +257,7 @@ watch(settings, () => {
 							<URange v-model="isDayAndHrs.hrs" size="sm" :min="0" :max="24" />
 						</UFormGroup>
 
-						<UAlert v-if="location.hostname === 'localhost'" icon="i-mdi-bug" color="yellow" variant="soft" :ui="{ padding: 'p-2' }">
+						<UAlert v-if="location.hostname === 'localhost'" icon="i-mdi-bug" color="yellow" variant="soft" title="" :ui="{ padding: 'p-2' }">
 							<template #description>
 								<div class="flex flex-col text-xs space-y-2">
 									<span>{{ now }}</span>
