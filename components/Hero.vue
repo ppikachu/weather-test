@@ -248,7 +248,7 @@ watch(settings, () => {
 							<URange v-model="data.current.temp_c" size="sm" :min="0" :max="40" />
 						</UFormGroup>
 						<UFormGroup :label="$t('precipitation') + ': ' + data.current.precip_mm + ' mm'">
-							<URange v-model="data.current.precip_mm" size="sm" :min="0" :max="20" />
+							<URange v-model="data.current.precip_mm" size="sm" :min="0" :max="1" :step="0.01" />
 						</UFormGroup>
 						<UFormGroup :label="$t('humidity') + ': ' + data.current.humidity + '%'">
 							<URange v-model="data.current.humidity" size="sm" :min="0" :max="100" />
