@@ -50,7 +50,8 @@ const timeAgo = useTimeAgo(now)
 //TODO: size?, format?, something or fix this!
 // const $img = useImage()
 const settings = useSettings()
-const photo = settings.value
+const photo = getPictureById(settings.backgroundPicture)
+
 const thunderLevels = [
 	{ code: 1000, thlevel: 0.00, text: "Clear", icon: "113" },
 	{ code: 1003, thlevel: 0.00, text: "Partly cloudy", icon: "116" },
@@ -169,7 +170,11 @@ watchOnce(coords, () => {
 	if (coords.value.latitude !== Infinity) refreshAll()
 })
 
-watchDeep(data, () => updateUniforms())
+// Watch for deep changes in the 'data' variable
+watchDeep(data, () => {
+	// Call the 'updateUniforms' function
+	updateUniforms()
+})
 
 watch(timeAgo, () => timeAgo.value !== "just now" ? refreshAll() : null )
 
@@ -180,9 +185,12 @@ watch([isDayAndHrs.value, HDNormals], () => {
 	if (data.value) { data.value.current.is_day = isDayAndHrs.value.isDay ? 1 : 0 }
 })
 
-watch(settings, () => {
-	sandbox.value.setUniform("u_tex0", settings.value)
+// Subscribe to the settings object and get the state object
+settings.$subscribe((_, state) => {
+	// Set the uniform "u_tex0" in the sandbox value with the value of state.backgroundPicture
+	sandbox.value.setUniform("u_tex0", getPictureById(state.backgroundPicture))
 })
+
 // #endregion debug listeners
 </script>
 

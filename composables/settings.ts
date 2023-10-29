@@ -25,4 +25,10 @@ export const backgroundPictures = () => useState('backgroundPictures', () => [
 	},
 ])
 
-export const useSettings = () => useState<string>('background', () => backgroundPictures().value[0].href)
+// Refactored function to retrieve a picture by its ID from a list of background pictures
+export function getPictureById(id: string) {
+	// Retrieve the list of background pictures
+	const pictures = backgroundPictures()
+	// Find the picture with the matching ID
+	return pictures.value.find((picture) => picture.id === id)?.href
+}
