@@ -256,7 +256,7 @@ settings.$subscribe((_, state) => {
 							<URange v-model="data.current.temp_c" size="sm" :min="0" :max="40" />
 						</UFormGroup>
 						<UFormGroup :label="$t('precipitation') + ': ' + data.current.precip_mm + ' mm'">
-							<URange v-model="data.current.precip_mm" size="sm" :min="0" :max="1" :step="0.01" />
+							<URange v-model="data.current.precip_mm" size="sm" :min="0" :max="3" :step="0.01" />
 						</UFormGroup>
 						<UFormGroup :label="$t('humidity') + ': ' + data.current.humidity + '%'">
 							<URange v-model="data.current.humidity" size="sm" :min="0" :max="100" />
@@ -265,7 +265,7 @@ settings.$subscribe((_, state) => {
 							<URange v-model="isDayAndHrs.hrs" size="sm" :min="0" :max="24" />
 						</UFormGroup>
 
-						<UAlert v-if="location.hostname === 'localhost'" icon="i-mdi-bug" color="yellow" variant="soft" title="" :ui="{ padding: 'p-2' }">
+						<UAlert icon="i-mdi-bug" color="yellow" variant="soft" title="" :ui="{ padding: 'p-2' }">
 							<template #description>
 								<div class="flex flex-col text-xs space-y-2">
 									<span>{{ now }}</span>

@@ -13,7 +13,7 @@
   "devDependencies": {
     "@nuxt/devtools": "1.0.0",
     "@nuxt/image": "1.0.0",
-    "@nuxt/ui": "^2.9.0",
+    "@nuxt/ui": "^2.10.0",
     "@nuxtjs/i18n": "8.0.0-rc.5",
     "@pinia/nuxt": "^0.5.1",
     "@vite-pwa/assets-generator": "^0.0.10",
