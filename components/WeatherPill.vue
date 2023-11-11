@@ -4,7 +4,7 @@
 			<div class="absolute bottom-20 flex items-end justify-center w-full select-none">
 				<UBadge
 					:color="pillColor"
-					variant="soft"
+					variant="solid"
 					size="md"
 					:ui="{ rounded: 'rounded-full', size: { md: 'whitespace-nowrap px-4' } }"
 				>
