@@ -3,7 +3,7 @@
 		<Transition>
 			<div class="absolute bottom-20 flex items-end justify-center w-full select-none">
 				<UBadge
-					:color="pillColor"
+					color="white"
 					variant="solid"
 					size="md"
 					:ui="{ rounded: 'rounded-full', size: { md: 'whitespace-nowrap px-4' } }"
@@ -123,9 +123,6 @@ const thunderLevels = [
 const pillColor = computed(() => {
 	if (props.data) {
 		return props.data.current.is_day ? 'amber' : 'indigo'
-	}
-	if (props.pending) {
-		return 'amber'
 	}
 	if (props.error) {
 		return 'red'
